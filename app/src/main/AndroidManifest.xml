@@ -7,7 +7,7 @@
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
+        android:label="welcome_page_label"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.BubbleFrontEnd"
@@ -24,8 +24,8 @@
         </activity>
 
         <activity
-            android:name=".MainActivity"
-            android:label="@string/app_name"
+            android:name=".RegistrationPage"
+            android:label="registration_page_label"
             android:theme="@style/Theme.BubbleFrontEnd">
         </activity>
 
