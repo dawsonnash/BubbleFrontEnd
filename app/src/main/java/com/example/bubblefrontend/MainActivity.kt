@@ -18,7 +18,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
 import android.content.Intent
-import androidx.compose.ui.platform.LocalContext
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
 
 class MainActivity : ComponentActivity() {
