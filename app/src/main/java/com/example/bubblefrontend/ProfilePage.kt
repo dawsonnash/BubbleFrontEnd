@@ -73,7 +73,7 @@ fun LogoutButton(){
     Button(
         onClick = {
 
-            val intent = Intent(context, MainActivity::class.java)
+            val intent = Intent(context, WelcomePage::class.java)
             context.startActivity(intent)
         }
     ) {

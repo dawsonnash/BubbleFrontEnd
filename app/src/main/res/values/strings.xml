@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">BubbleFrontEnd</string>
     <string name="profile_page_label">BubbleFrontEnd</string>
+    <string name="welcome_page_label">BubbleFrontEnd</string>
 
 </resources>
