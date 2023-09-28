@@ -70,7 +70,7 @@ fun RegistrationPage() {
                 imeAction = ImeAction.Done
             ),
             modifier = Modifier.fillMaxWidth()
-                .background(Color.Blue) // Test
+                .background(Color.Red) // Test
 
         )
 
