@@ -16,6 +16,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
 
 class MainActivity : ComponentActivity() {
@@ -38,6 +41,8 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegistrationPage() {
+
+    val context = LocalContext.current              // For transitioning to other activities
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -80,10 +85,13 @@ fun RegistrationPage() {
             onClick = {
                 // Handle registration
                 // handleRegistration(email, password)
+                val intent = Intent(context, ProfilePage::class.java)
+                context.startActivity(intent)
             }
         ) {
             Text("Register")
         }
+
     }
 }
 

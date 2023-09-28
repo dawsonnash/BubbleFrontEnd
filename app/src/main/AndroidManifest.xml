@@ -12,6 +12,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BubbleFrontEnd"
         tools:targetApi="31">
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -19,10 +20,17 @@
             android:theme="@style/Theme.BubbleFrontEnd">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Adding the ProfilePage activity -->
+        <activity
+            android:name=".ProfilePage"
+            android:label="@string/profile_page_label"
+            android:theme="@style/Theme.BubbleFrontEnd">
+        </activity>
+
     </application>
 
 </manifest>
