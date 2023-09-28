@@ -60,7 +60,7 @@ fun WelcomeScreen() {
         }
         Button(
             onClick = {
-                val intent = Intent(context, ProfilePage::class.java) // Need to go to login screen
+                val intent = Intent(context, LoginPage::class.java) // Need to go to login screen
                 context.startActivity(intent)
             }
         ) {

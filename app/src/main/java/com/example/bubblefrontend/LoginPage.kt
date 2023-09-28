@@ -18,7 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import android.content.Intent
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
 
-class RegistrationPage : ComponentActivity() {
+class LoginPage : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -28,16 +28,17 @@ class RegistrationPage : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Registration()
+                    Login()
                 }
             }
         }
     }
 }
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Registration() {
+fun Login() {
     val context = LocalContext.current              // For transitioning to other activities
     Column(
         modifier = Modifier
@@ -46,57 +47,12 @@ fun Registration() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        var firstName by remember { mutableStateOf("") }
-        var lastName by remember { mutableStateOf("") }
-        var username by remember { mutableStateOf("") }
-        var phoneNumber by remember { mutableStateOf("") }
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
-        var confirmPassword by remember { mutableStateOf("") }
-
-        OutlinedTextField(
-            value = firstName,
-            onValueChange = { if (it.length <= 32) firstName = it },
-            label = { Text("First Name") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = lastName,
-            onValueChange = { if (it.length <= 32) lastName = it },
-            label = { Text("Last Name") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = username,
-            onValueChange = { if (it.length <= 32) username = it },
-            label = { Text("Username") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = phoneNumber,
-            onValueChange = { if (it.length <= 10) phoneNumber = it },
-            label = { Text("Phone Number") },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Phone,
-                imeAction = ImeAction.Next
-            ),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
             value = email,
-            onValueChange = { if (it.length <= 32) email = it },
+            onValueChange = { email = it },
             label = { Text("Email") },
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Email,
@@ -109,22 +65,8 @@ fun Registration() {
 
         OutlinedTextField(
             value = password,
-            onValueChange = { if (it.length <= 32) password = it },
+            onValueChange = { password = it },
             label = { Text("Password") },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Password,
-                imeAction = ImeAction.Next
-            ),
-            visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = confirmPassword,
-            onValueChange = { if (it.length <= 32) confirmPassword = it },
-            label = { Text("Confirm Password") },
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Done
@@ -139,9 +81,8 @@ fun Registration() {
             onClick = {
                 val intent = Intent(context, ProfilePage::class.java) // Need to go to login screen
                 context.startActivity(intent)
-            }
-        ) {
-            Text("Register")
+            }        ) {
+            Text("Login")
         }
     }
 }
@@ -149,9 +90,9 @@ fun Registration() {
 
 @Preview(showBackground = true)
 @Composable
-fun RegistrationPreview() {
+fun LoginPreview() {
     BubbleFrontEndTheme {
-        Registration()
+        Login()
     }
 }
 

@@ -28,6 +28,11 @@
             android:label="registration_page_label"
             android:theme="@style/Theme.BubbleFrontEnd">
         </activity>
+        <activity
+            android:name=".LoginPage"
+            android:label="login_page_label"
+            android:theme="@style/Theme.BubbleFrontEnd">
+        </activity>
 
         <!-- Adding the ProfilePage activity -->
         <activity

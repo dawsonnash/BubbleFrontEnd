@@ -1,6 +1,7 @@
 <resources>
-    <string name="registration_page_label">BubbleFrontEnd</string>
-    <string name="profile_page_label">BubbleFrontEnd</string>
     <string name="welcome_page_label">BubbleFrontEnd</string>
+    <string name="profile_page_label">BubbleFrontEnd</string>
+    <string name="registration_page_label">BubbleFrontEnd</string>
+    <string name="login_page_label">BubbleFrontEnd</string>
 
 </resources>
