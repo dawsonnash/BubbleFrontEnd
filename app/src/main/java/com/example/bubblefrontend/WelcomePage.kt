@@ -57,6 +57,7 @@ fun WelcomeScreen() {
             }
         ) {
             Text("Register")
+
         }
         Button(
             onClick = {
