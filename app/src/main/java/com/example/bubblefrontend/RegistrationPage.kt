@@ -1,6 +1,7 @@
 package com.example.bubblefrontend
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -17,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
 import android.content.Intent
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
+
 
 class RegistrationPage : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -152,8 +154,13 @@ fun Registration() {
 
         Button(
             onClick = {
-                val intent = Intent(context, ProfilePage::class.java) // Need to go to login screen
-                context.startActivity(intent)
+                if (UserManager.addUser(username, password)) {
+                    val intent = Intent(context, ProfilePage::class.java) // Need to go to login screen
+                    context.startActivity(intent)
+                } else {
+                    Toast.makeText(context, "Error", Toast.LENGTH_LONG).show()
+                }
+
             }
         ) {
             Text("Register")
