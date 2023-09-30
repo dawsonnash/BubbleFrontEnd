@@ -58,7 +58,13 @@ fun Registration() {
             value = firstName,
             onValueChange = { if (it.length <= 32) firstName = it },
             label = { Text("First Name") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Next
+            ),
+
+
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -67,7 +73,12 @@ fun Registration() {
             value = lastName,
             onValueChange = { if (it.length <= 32) lastName = it },
             label = { Text("Last Name") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Next
+            ),
+
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -76,7 +87,11 @@ fun Registration() {
             value = username,
             onValueChange = { if (it.length <= 32) username = it },
             label = { Text("Username") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Next
+            ),
         )
 
         Spacer(modifier = Modifier.height(8.dp))
