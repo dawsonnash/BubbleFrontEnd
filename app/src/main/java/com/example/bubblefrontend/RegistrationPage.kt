@@ -159,7 +159,7 @@ fun Registration() {
                         val intent = Intent(context, ProfilePage::class.java)
                         context.startActivity(intent)
                     } else {
-                        Toast.makeText(context, "Username already exists!", Toast.LENGTH_LONG)
+                        Toast.makeText(context, "Email or username already exists!", Toast.LENGTH_LONG)
                             .show()
                     }
                 }

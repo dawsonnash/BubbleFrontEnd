@@ -13,7 +13,7 @@ object UserManager {
 
     // Add a user to the HashMap
     fun addUser(username: String, password: String, firstName: String, lastName: String, email: String): Boolean {
-        if (userMap.containsKey(username)) {
+        if (userMap.any { it.value.username == username || it.value.email == email }){
             return false // Username already exists
         }
         userMap[username] = User(username, password, firstName, lastName, email)
