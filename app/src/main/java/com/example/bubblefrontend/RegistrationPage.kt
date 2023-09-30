@@ -154,11 +154,17 @@ fun Registration() {
 
         Button(
             onClick = {
-                if (UserManager.addUser(username, password, firstName, lastName, email)) {
-                    val intent = Intent(context, ProfilePage::class.java)
-                    context.startActivity(intent)
-                } else {
-                    Toast.makeText(context, "Username already exists!", Toast.LENGTH_LONG).show()
+                if (password == confirmPassword) {
+                    if (UserManager.addUser(username, password, firstName, lastName, email)) {
+                        val intent = Intent(context, ProfilePage::class.java)
+                        context.startActivity(intent)
+                    } else {
+                        Toast.makeText(context, "Username already exists!", Toast.LENGTH_LONG)
+                            .show()
+                    }
+                }
+                else{
+                    Toast.makeText(context, "Passwords do not match", Toast.LENGTH_LONG).show()
                 }
 
             }
