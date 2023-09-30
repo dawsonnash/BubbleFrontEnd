@@ -158,7 +158,7 @@ fun Registration() {
                     val intent = Intent(context, ProfilePage::class.java) // Need to go to login screen
                     context.startActivity(intent)
                 } else {
-                    Toast.makeText(context, "User already exists!", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, "Username already exists!", Toast.LENGTH_LONG).show()
                 }
 
             }
