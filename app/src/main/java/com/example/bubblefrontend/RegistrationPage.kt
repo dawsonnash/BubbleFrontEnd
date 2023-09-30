@@ -152,7 +152,7 @@ fun Registration() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(
+        Button( // Still allows for null information, i.e, no password, no username
             onClick = {
                 if (password == confirmPassword) {
                     if (UserManager.addUser(username, password, firstName, lastName, email)) {
