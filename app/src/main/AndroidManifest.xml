@@ -37,7 +37,7 @@
         <!-- Adding the ProfilePage activity -->
         <activity
             android:name=".ProfilePage"
-            android:label="@string/profile_page_label"
+            android:label="profile_page_label"
             android:theme="@style/Theme.BubbleFrontEnd">
         </activity>
 
