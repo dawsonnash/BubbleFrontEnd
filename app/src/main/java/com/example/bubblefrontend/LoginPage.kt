@@ -1,6 +1,8 @@
 package com.example.bubblefrontend
 
+import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -9,13 +11,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.platform.LocalContext
-import android.content.Intent
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
 
 class LoginPage : ComponentActivity() {
@@ -47,15 +48,15 @@ fun Login() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        var email by remember { mutableStateOf("") }
+        var username by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
 
         OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("Email") },
+            value = username,
+            onValueChange = { username = it },
+            label = { Text("Username or Email") },
             keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Email,
+                keyboardType = KeyboardType.Text,
                 imeAction = ImeAction.Next
             ),
             modifier = Modifier.fillMaxWidth()
@@ -79,8 +80,12 @@ fun Login() {
 
         Button(
             onClick = {
-                val intent = Intent(context, ProfilePage::class.java) // Need to go to login screen
-                context.startActivity(intent)
+                if (UserManager.isValidLogin(username, password)) {
+                    val intent = Intent(context, ProfilePage::class.java)
+                    context.startActivity(intent)
+                } else {
+                    Toast.makeText(context, "Invalid username or password", Toast.LENGTH_LONG).show()
+                }
             }        ) {
             Text("Login")
         }
