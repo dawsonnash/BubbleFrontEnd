@@ -1,5 +1,9 @@
 package com.example.bubblefrontend
 
+// Internal data structure for managing all user information
+// To be replaced upon communication with mySQL database
+// Think about functions we will need make for retrieving data from the database
+// i.e., login validation, user/friend search
 object UserManager {
 
     // Initialize empty HashMap to store username and User object

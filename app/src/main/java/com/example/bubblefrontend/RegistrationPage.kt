@@ -1,3 +1,6 @@
+// Notes
+// -- Registration still allows for null inputs, i.e., no password or username
+
 package com.example.bubblefrontend
 
 import android.content.Intent
@@ -18,7 +21,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
-
 
 class RegistrationPage : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -152,8 +154,11 @@ fun Registration() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button( // Still allows for null information, i.e, no password, no username
+        Button(
             onClick = {
+                // Check if password matches
+                // If so, check if username/email is being used
+                // If not, add account
                 if (password == confirmPassword) {
                     if (UserManager.addUser(username, password, firstName, lastName, email)) {
                         val intent = Intent(context, ProfilePage::class.java)

@@ -4,11 +4,8 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,10 +20,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,8 +37,9 @@ class ProfilePage : ComponentActivity() {
                             .fillMaxSize()
                             .padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.SpaceBetween  // Places children at the start and end
+                        verticalArrangement = Arrangement.SpaceBetween
                     ){
+                        // Temporary location for search button feature. Should probably move to its own page
                         SearchButton()
                         LogoutButton()
                     }
@@ -71,7 +67,7 @@ fun LogoutButton(){
 // Will need to be updated upon working with mySQL database
 fun SearchButton() {
     var searchQuery by remember { mutableStateOf("") }
-    val allUsernames = UserManager.getAllUsernames() // Assume this returns a list of usernames
+    val allUsernames = UserManager.getAllUsernames()
     val filteredUsernames = allUsernames.filter { it.contains(searchQuery, ignoreCase = true) }
     Column(
         modifier = Modifier
@@ -82,11 +78,12 @@ fun SearchButton() {
             value = searchQuery,
             onValueChange = { searchQuery = it },
             label = { Text("Search Users") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
         )
 
         // Display results
-        if (searchQuery.isNotEmpty()) { // Only show the list when there's a query
+        if (searchQuery.isNotEmpty()) { // Only show the list when the user is actively searching
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -94,8 +91,9 @@ fun SearchButton() {
 
             ) {
                 items(filteredUsernames) { username ->
-                    val user = UserManager.getUserDetails(username) // Assume this gets the User object for a username
+                    val user = UserManager.getUserDetails(username)
                     if (user != null) {
+                        // Style that user info is displayed
                         Text("${user.firstName} ${user.lastName} ~ ${user.username}", style = TextStyle(fontSize = 20.sp))
                     }
                     Divider()
@@ -104,9 +102,6 @@ fun SearchButton() {
         }
     }
 }
-
-
-
 @Preview(showBackground = true)
 @Composable
 fun WelcomeMessagePreview() {
