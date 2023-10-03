@@ -4,14 +4,18 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,29 +28,50 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.navigation.NavController
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
+import com.google.android.material.bottomnavigation.BottomNavigationItemView
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.internal.NavigationMenu
 
 class HomePage : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             BubbleFrontEndTheme {
-                Column (
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.SpaceBetween
-                ){
-                    // Temporary location for search button feature. Should probably move to its own page
-                    SearchButton()
-                    LogoutButton()
-                }
 
+                HomeScreen()
             }
         }
     }
 }
+
+@Composable
+fun HomeScreen(){
+    val navController = rememberNavController()
+    Column (
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceBetween
+    ){
+        // Temporary location for search button feature. Should probably move to its own page
+        SearchButton()
+        Row(
+            modifier = Modifier
+                .padding(16.dp),
+
+            ) {
+            LogoutButton()
+            ProfileButton()
+        }
+    }
+}
+
 @Composable
 fun LogoutButton(){
     val context = LocalContext.current              // For transitioning to other activities
@@ -59,6 +84,24 @@ fun LogoutButton(){
     ) {
         Text("Logout")
     }
+}
+
+@Composable
+fun ProfileButton(){
+    val context = LocalContext.current              // For transitioning to other activities
+    IconButton(onClick = {
+        val intent = Intent(context, ProfilePage::class.java)
+        context.startActivity(intent)
+    },
+        modifier = Modifier.size(48.dp)
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.profile_icon),  // Replace with your own drawable resource
+            contentDescription = "Profile",
+            modifier = Modifier.padding(8.dp)
+        )
+    }
+
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
