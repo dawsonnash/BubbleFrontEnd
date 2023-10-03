@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
@@ -40,11 +41,18 @@ class ProfilePage : ComponentActivity() {
                         verticalArrangement = Arrangement.SpaceBetween
                     ){
                         // Temporary location for search button feature. Should probably move to its own page
-                        SearchButton()
+                        TempTitle()
                         LogoutButton()
                     }
 
             }
         }
     }
+}
+
+@Composable
+fun TempTitle(){
+    Text(text = "Profile Page", style = TextStyle(fontSize = 50.sp)
+    )
+
 }
