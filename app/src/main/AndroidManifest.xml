@@ -42,6 +42,11 @@
         android:name=".HomePage"
         android:label="home_page_label"
         android:theme="@style/Theme.BubbleFrontEnd">
+        </activity>
+    <activity
+    android:name=".UserSearchPage"
+    android:label="user_search_page_label"
+    android:theme="@style/Theme.BubbleFrontEnd">
     </activity>
 
 

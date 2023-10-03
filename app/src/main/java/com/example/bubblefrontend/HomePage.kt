@@ -60,7 +60,7 @@ fun HomeScreen(){
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ){
-        SearchButton()
+        Text(text = "Global", style = TextStyle(fontSize = 50.sp))
         BottomDashboard()
         }
     }
@@ -101,7 +101,7 @@ fun ProfileButton(){
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 // Will need to be updated upon working with mySQL database
-fun SearchButton() {
+fun SearchBar() {
     var searchQuery by remember { mutableStateOf("") }
     val allUsernames = UserManager.getAllUsernames()
     val filteredUsernames = allUsernames.filter { it.contains(searchQuery, ignoreCase = true) }
@@ -149,7 +149,6 @@ fun BottomDashboard() {
             .fillMaxWidth()
             .height(56.dp)
             .background(Color.White, shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-            .padding(8.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
@@ -157,7 +156,7 @@ fun BottomDashboard() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             DashboardButton(
-                title = "Home",
+                title = "Global",
                 icon = Icons.Default.Home,
                 onClick = {
                     val intent = Intent(context, HomePage::class.java)  // Replace with your Activity
@@ -169,7 +168,7 @@ fun BottomDashboard() {
                 title = "Search",
                 icon = Icons.Default.Search,
                 onClick = {
-                    val intent = Intent(context, ProfilePage::class.java)  // Replace with your Activity
+                    val intent = Intent(context, UserSearchPage::class.java)  // Replace with your Activity
                     context.startActivity(intent)
                 }
             )
@@ -192,7 +191,6 @@ fun DashboardButton(title: String, icon: androidx.compose.ui.graphics.vector.Ima
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier = Modifier
-            //.weight(1f)
             .clickable(onClick = onClick)
     ) {
         Icon(imageVector = icon, contentDescription = title)
