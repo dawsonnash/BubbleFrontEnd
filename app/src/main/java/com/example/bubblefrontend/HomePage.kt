@@ -32,10 +32,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
-import com.google.android.material.bottomnavigation.BottomNavigationItemView
-import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.google.android.material.internal.NavigationMenu
 
 class HomePage : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,7 +49,6 @@ class HomePage : ComponentActivity() {
 
 @Composable
 fun HomeScreen(){
-    val navController = rememberNavController()
     Column (
         modifier = Modifier
             .fillMaxSize()
