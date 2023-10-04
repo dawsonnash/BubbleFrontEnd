@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -40,19 +39,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
 
-class HomePage : ComponentActivity() {
+class GlobalPage : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             BubbleFrontEndTheme {
-                HomeScreen()
+                GlobalScreen()
             }
         }
     }
 }
 
 @Composable
-fun HomeScreen(){
+fun GlobalScreen(){
     Column (
         modifier = Modifier
             .fillMaxSize()
@@ -81,65 +80,6 @@ fun LogoutButton(){
 }
 
 @Composable
-fun ProfileButton(){
-    val context = LocalContext.current              // For transitioning to other activities
-    IconButton(onClick = {
-        val intent = Intent(context, ProfilePage::class.java)
-        context.startActivity(intent)
-    },
-        modifier = Modifier.size(48.dp)
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.profile_icon),  // Replace with your own drawable resource
-            contentDescription = "Profile",
-            modifier = Modifier.padding(8.dp)
-        )
-    }
-
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-// Will need to be updated upon working with mySQL database
-fun SearchBar() {
-    var searchQuery by remember { mutableStateOf("") }
-    val allUsernames = UserManager.getAllUsernames()
-    val filteredUsernames = allUsernames.filter { it.contains(searchQuery, ignoreCase = true) }
-    Column(
-        modifier = Modifier
-            .padding(16.dp)
-    ) {
-        // Search field
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
-            label = { Text("Search Users") },
-            modifier = Modifier
-                .fillMaxWidth()
-        )
-
-        // Display results
-        if (searchQuery.isNotEmpty()) { // Only show the list when the user is actively searching
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-
-            ) {
-                items(filteredUsernames) { username ->
-                    val user = UserManager.getUserDetails(username)
-                    if (user != null) {
-                        // Style that user info is displayed
-                        Text("${user.firstName} ${user.lastName} ~ ${user.username}", style = TextStyle(fontSize = 20.sp))
-                    }
-                    Divider()
-                }
-            }
-        }
-    }
-}
-
-@Composable
 fun BottomDashboard() {
     val context = LocalContext.current  // Obtain the current context
 
@@ -159,7 +99,7 @@ fun BottomDashboard() {
                 title = "Global",
                 icon = Icons.Default.Home,
                 onClick = {
-                    val intent = Intent(context, HomePage::class.java)  // Replace with your Activity
+                    val intent = Intent(context, GlobalPage::class.java)  // Replace with your Activity
                     context.startActivity(intent)
                 }
             )

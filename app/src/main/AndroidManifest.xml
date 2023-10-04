@@ -39,8 +39,8 @@
             android:label="profile_page_label"
             android:theme="@style/Theme.BubbleFrontEnd">
         </activity> <activity
-        android:name=".HomePage"
-        android:label="home_page_label"
+        android:name=".GlobalPage"
+        android:label="global_page_label"
         android:theme="@style/Theme.BubbleFrontEnd">
         </activity>
     <activity

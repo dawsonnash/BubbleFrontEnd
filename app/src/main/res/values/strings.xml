@@ -3,7 +3,7 @@
     <string name="registration_page_label">BubbleFrontEnd</string>
     <string name="login_page_label">BubbleFrontEnd</string>
     <string name="profile_page_label">BubbleFrontEnd</string>
-    <string name="home_page_label">BubbleFrontEnd</string>
+    <string name="global_page_label">BubbleFrontEnd</string>
     <string name="user_search_page_label">BubbleFrontEnd</string>
 
 
