@@ -34,12 +34,21 @@
             android:theme="@style/Theme.BubbleFrontEnd">
         </activity>
 
-        <!-- Adding the ProfilePage activity -->
         <activity
             android:name=".ProfilePage"
             android:label="profile_page_label"
             android:theme="@style/Theme.BubbleFrontEnd">
+        </activity> <activity
+        android:name=".GlobalPage"
+        android:label="global_page_label"
+        android:theme="@style/Theme.BubbleFrontEnd">
         </activity>
+    <activity
+    android:name=".UserSearchPage"
+    android:label="user_search_page_label"
+    android:theme="@style/Theme.BubbleFrontEnd">
+    </activity>
+
 
     </application>
 

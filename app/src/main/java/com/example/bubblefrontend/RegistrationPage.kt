@@ -161,7 +161,7 @@ fun Registration() {
                 // If not, add account
                 if (password == confirmPassword) {
                     if (UserManager.addUser(username, password, firstName, lastName, email)) {
-                        val intent = Intent(context, ProfilePage::class.java)
+                        val intent = Intent(context, GlobalPage::class.java)
                         context.startActivity(intent)
                     } else {
                         Toast.makeText(context, "Email or username already exists!", Toast.LENGTH_LONG)

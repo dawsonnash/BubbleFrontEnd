@@ -81,7 +81,7 @@ fun Login() {
         Button(
             onClick = {
                 if (UserManager.isValidLogin(username, password)) {
-                    val intent = Intent(context, ProfilePage::class.java)
+                    val intent = Intent(context, GlobalPage::class.java)
                     context.startActivity(intent)
                 } else {
                     Toast.makeText(context, "Invalid username or password", Toast.LENGTH_LONG).show()
