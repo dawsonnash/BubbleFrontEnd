@@ -6,7 +6,7 @@ import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.POST
 
-interface MyApi {
+interface ApiMethods {
     @POST("login")
     fun authenticateLogin(@Body loginRequest: LoginRequest): Call<LoginResponse>
     @POST("register")

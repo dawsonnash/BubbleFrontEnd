@@ -1,6 +1,6 @@
 package com.example.bubblefrontend
 
-import MyApi
+import ApiMethods
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
@@ -53,7 +53,7 @@ fun Login() {
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
-    val apiService = retrofit.create(MyApi::class.java)
+    val apiService = retrofit.create(ApiMethods::class.java)
 
     Column(
         modifier = Modifier
