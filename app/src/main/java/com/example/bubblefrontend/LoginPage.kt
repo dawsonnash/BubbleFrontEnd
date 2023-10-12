@@ -1,9 +1,6 @@
 package com.example.bubblefrontend
 
-import ApiMethods
-import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -19,11 +16,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 
 
 class LoginPage : ComponentActivity() {
@@ -48,12 +40,7 @@ class LoginPage : ComponentActivity() {
 @Composable
 fun Login() {
     val context = LocalContext.current              // For transitioning to other activities
-    val retrofit = Retrofit.Builder()
-        .baseUrl("http://54.202.77.126:8080")
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
 
-    val apiService = retrofit.create(ApiMethods::class.java)
 
     Column(
         modifier = Modifier
@@ -95,44 +82,8 @@ fun Login() {
 
         Button(
             onClick = {
-                val loginRequest = LoginRequest(username, password)
-
-                val call = apiService.authenticateLogin(loginRequest)
-
-                call.enqueue(object : Callback<LoginResponse> {
-                    override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
-                        if (response.isSuccessful) {
-                            val loginResponse = response.body()
-                            val token = loginResponse?.token
-
-                            if (!token.isNullOrEmpty()) {
-                                // Successfully authenticated
-                                // Have token, need to storemaybe? Look into SharedPreferences
-                                val intent = Intent(context, GlobalPage::class.java)
-                                context.startActivity(intent)
-                            } else {
-                                Toast.makeText(context, "Authentication failed", Toast.LENGTH_LONG).show()
-                            }
-                        } else {
-                            when (response.code()) {
-                                // Error 401
-                                401 -> {
-                                    Toast.makeText(context, "Invalid credentials", Toast.LENGTH_LONG).show()
-                                }
-                                else -> {
-                                    // Unexpected errors
-                                    Toast.makeText(context, "Error: ${response.code()}", Toast.LENGTH_LONG).show()
-                                }
-                            }
-                        }
-                    }
-
-                    override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
-                        // for network failures
-                        Toast.makeText(context, "Network error", Toast.LENGTH_LONG).show()
-                    }
-                })
-
+                val apiHandler = ApiHandler()
+                apiHandler.handleLogin(username, password, context)
             }
         ) {
             Text("Login")
