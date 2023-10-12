@@ -1,5 +1,6 @@
 package com.example.bubblefrontend
 
+import MyApi
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
@@ -18,6 +19,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+
 
 class LoginPage : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,6 +48,13 @@ class LoginPage : ComponentActivity() {
 @Composable
 fun Login() {
     val context = LocalContext.current              // For transitioning to other activities
+    val retrofit = Retrofit.Builder()
+        .baseUrl("http://54.202.77.126:8080")
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
+    val apiService = retrofit.create(MyApi::class.java)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -78,17 +92,52 @@ fun Login() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
+
         Button(
             onClick = {
-                if (UserManager.isValidLogin(username, password)) {
-                    val intent = Intent(context, GlobalPage::class.java)
-                    context.startActivity(intent)
-                } else {
-                    Toast.makeText(context, "Invalid username or password", Toast.LENGTH_LONG).show()
-                }
-            }        ) {
+                val loginRequest = LoginRequest(username, password)
+
+                val call = apiService.authenticateLogin(loginRequest)
+
+                call.enqueue(object : Callback<LoginResponse> {
+                    override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
+                        if (response.isSuccessful) {
+                            val loginResponse = response.body()
+                            val token = loginResponse?.token
+
+                            if (!token.isNullOrEmpty()) {
+                                // Successfully authenticated
+                                // Have token, need to storemaybe? Look into SharedPreferences
+                                val intent = Intent(context, GlobalPage::class.java)
+                                context.startActivity(intent)
+                            } else {
+                                Toast.makeText(context, "Authentication failed", Toast.LENGTH_LONG).show()
+                            }
+                        } else {
+                            when (response.code()) {
+                                // Error 401
+                                401 -> {
+                                    Toast.makeText(context, "Invalid credentials", Toast.LENGTH_LONG).show()
+                                }
+                                else -> {
+                                    // Unexpected errors
+                                    Toast.makeText(context, "Error: ${response.code()}", Toast.LENGTH_LONG).show()
+                                }
+                            }
+                        }
+                    }
+
+                    override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
+                        // for network failures
+                        Toast.makeText(context, "Network error", Toast.LENGTH_LONG).show()
+                    }
+                })
+
+            }
+        ) {
             Text("Login")
         }
+
     }
 }
 

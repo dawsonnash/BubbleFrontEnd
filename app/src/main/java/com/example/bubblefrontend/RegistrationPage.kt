@@ -3,6 +3,7 @@
 
 package com.example.bubblefrontend
 
+import MyApi
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
@@ -21,6 +22,11 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
+import retrofit2.Retrofit
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.converter.gson.GsonConverterFactory
 
 class RegistrationPage : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,6 +49,13 @@ class RegistrationPage : ComponentActivity() {
 @Composable
 fun Registration() {
     val context = LocalContext.current              // For transitioning to other activities
+    val retrofit = Retrofit.Builder()
+        .baseUrl("http://54.202.77.126:8080")
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
+    val apiService = retrofit.create(MyApi::class.java)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -160,13 +173,46 @@ fun Registration() {
                 // If so, check if username/email is being used
                 // If not, add account
                 if (password == confirmPassword) {
-                    if (UserManager.addUser(username, password, firstName, lastName, email)) {
-                        val intent = Intent(context, GlobalPage::class.java)
-                        context.startActivity(intent)
-                    } else {
-                        Toast.makeText(context, "Email or username already exists!", Toast.LENGTH_LONG)
-                            .show()
-                    }
+
+                    val registrationRequest = RegistrationRequest(email,firstName, username, password)  // Need to add last name
+                    val call = apiService.registerUser(registrationRequest)
+
+                    call.enqueue(object : Callback<RegistrationResponse> {
+                        override fun onResponse(call: Call<RegistrationResponse>, response: Response<RegistrationResponse>) {
+                            if (response.isSuccessful) {
+                                val registrationResponse = response.body()
+                                val message = registrationResponse?.message
+
+                                if (!message.isNullOrEmpty()) {
+                                    // Registration successful
+                                    Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                                    // Navigate to login page
+                                    val intent = Intent(context, LoginPage::class.java)
+                                    context.startActivity(intent)
+                                }
+                            } else {
+                                // Handle error codes based on API doc
+                                when (response.code()) {
+                                    400 -> {
+                                        Toast.makeText(context, "Username/email already exists", Toast.LENGTH_LONG).show()
+                                    }
+                                    500 -> {
+                                        Toast.makeText(context, "Registration failed", Toast.LENGTH_LONG).show()
+                                    }
+                                    else -> {
+                                        // Unknown errors
+                                        Toast.makeText(context, "Unknown error", Toast.LENGTH_LONG).show()
+                                    }
+                                }
+                            }
+                        }
+
+                        override fun onFailure(call: Call<RegistrationResponse>, t: Throwable) {
+                            // network failure
+                            Toast.makeText(context, "Network error", Toast.LENGTH_LONG).show()
+                        }
+                    })
+
                 }
                 else{
                     Toast.makeText(context, "Passwords do not match", Toast.LENGTH_LONG).show()
