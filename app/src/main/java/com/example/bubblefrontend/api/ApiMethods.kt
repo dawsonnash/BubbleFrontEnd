@@ -1,7 +1,5 @@
-import com.example.bubblefrontend.LoginRequest
-import com.example.bubblefrontend.LoginResponse
-import com.example.bubblefrontend.RegistrationRequest
-import com.example.bubblefrontend.RegistrationResponse
+package com.example.bubblefrontend.api
+
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.POST

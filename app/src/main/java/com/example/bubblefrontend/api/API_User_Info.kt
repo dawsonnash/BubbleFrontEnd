@@ -1,4 +1,4 @@
-package com.example.bubblefrontend
+package com.example.bubblefrontend.api
 
 data class LoginRequest(
     val username: String,

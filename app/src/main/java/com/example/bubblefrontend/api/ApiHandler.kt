@@ -1,9 +1,10 @@
-package com.example.bubblefrontend
+package com.example.bubblefrontend.api
 
-import ApiMethods
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
+import com.example.bubblefrontend.GlobalPage
+import com.example.bubblefrontend.LoginPage
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
