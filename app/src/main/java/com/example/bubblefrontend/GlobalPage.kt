@@ -55,22 +55,35 @@ fun GlobalScreen() {
                     offsetY += pan.y
                 }
             }
-            .graphicsLayer(
-                translationX = offsetX,
-                translationY = offsetY
-            )
     ) {
+        // For the posts that move with panning
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer(
+                    translationX = offsetX,
+                    translationY = offsetY
+                )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                // Display all the posts
+                posts.reversed().forEach { post ->
+                    Text(text = post, modifier = Modifier.align(Alignment.CenterHorizontally))
+                }
+            }
+        }
+
+        // Fixed position UI elements
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            Spacer(modifier = Modifier.weight(1f))  // Pushes the items below to the center
-
-            // Display all the posts
-            posts.reversed().forEach { post ->
-                Text(text = post, modifier = Modifier.align(Alignment.CenterHorizontally))
-            }
+            Spacer(modifier = Modifier.weight(1f))  // Pushes the items below to the bottom
 
             // Post creation menu (visible when isPostMenuVisible is true)
             if (isPostMenuVisible) {
@@ -99,6 +112,7 @@ fun GlobalScreen() {
         }
     }
 }
+
 
 @Composable
 fun BottomDashboard() {
