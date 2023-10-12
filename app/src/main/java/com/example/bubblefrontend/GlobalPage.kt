@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -13,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
@@ -20,6 +22,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.ui.graphics.graphicsLayer
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 class GlobalPage : ComponentActivity() {
@@ -39,43 +43,60 @@ fun GlobalScreen() {
     var postText by remember { mutableStateOf("") }
     var isPostMenuVisible by remember { mutableStateOf(false) }
     var posts by remember { mutableStateOf(listOf<String>()) }
+    var offsetX by remember { mutableStateOf(0f) }
+    var offsetY by remember { mutableStateOf(0f) }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Spacer(modifier = Modifier.weight(1f))  // This pushes the items below to the center
-
-        // Display all the posts
-        posts.reversed().forEach { post ->
-            Text(text = post, modifier = Modifier.align(Alignment.CenterHorizontally))
-        }
-
-        // Post creation menu (visible when isPostMenuVisible is true)
-        if (isPostMenuVisible) {
-            OutlinedTextField(
-                value = postText,
-                onValueChange = { postText = it },
-                label = { Text("Write your post") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            Button(onClick = {
-                posts = posts + postText  // Add the new post to the list
-                postText = ""  // Clear the input field
-                isPostMenuVisible = false  // Hide the post creation menu
-            }) {
-                Text("Post")
+            .pointerInput(Unit) {
+                detectTransformGestures { _, pan, _, _ ->
+                    offsetX += pan.x
+                    offsetY += pan.y
+                }
             }
-        }
+            .graphicsLayer(
+                translationX = offsetX,
+                translationY = offsetY
+            )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            Spacer(modifier = Modifier.weight(1f))  // Pushes the items below to the center
 
-        // Plus button to toggle post creation menu
-        Button(onClick = { isPostMenuVisible = !isPostMenuVisible }) {
-            Text("+")
-        }
+            // Display all the posts
+            posts.reversed().forEach { post ->
+                Text(text = post, modifier = Modifier.align(Alignment.CenterHorizontally))
+            }
 
-        Spacer(modifier = Modifier.height(16.dp))  // Space between the plus button and dashboard
-        BottomDashboard()
+            // Post creation menu (visible when isPostMenuVisible is true)
+            if (isPostMenuVisible) {
+                OutlinedTextField(
+                    value = postText,
+                    onValueChange = { postText = it },
+                    label = { Text("Write your post") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Button(onClick = {
+                    posts = posts + postText  // Add the new post to the list
+                    postText = ""  // Clear the input field
+                    isPostMenuVisible = false  // Hide the post creation menu
+                }) {
+                    Text("Post")
+                }
+            }
+
+            // Plus button to toggle post creation menu
+            Button(onClick = { isPostMenuVisible = !isPostMenuVisible }) {
+                Text("+")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))  // Space between the plus button and dashboard
+            BottomDashboard()
+        }
     }
 }
 
