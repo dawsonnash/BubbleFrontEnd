@@ -4,41 +4,24 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Search
 
+@OptIn(ExperimentalMaterial3Api::class)
 class GlobalPage : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,32 +33,49 @@ class GlobalPage : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GlobalScreen(){
-    Column (
+fun GlobalScreen() {
+    var postText by remember { mutableStateOf("") }
+    var isPostMenuVisible by remember { mutableStateOf(false) }
+    var posts by remember { mutableStateOf(listOf<String>()) }
+
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
-    ){
-        Text(text = "Global", style = TextStyle(fontSize = 50.sp))
-        BottomDashboard()
-        }
-    }
-
-
-@Composable
-fun LogoutButton(){
-    val context = LocalContext.current              // For transitioning to other activities
-    Button(
-        onClick = {
-
-            val intent = Intent(context, WelcomePage::class.java)
-            context.startActivity(intent)
-        }
+            .padding(16.dp)
     ) {
-        Text("Logout")
+        Spacer(modifier = Modifier.weight(1f))  // This pushes the items below to the center
+
+        // Display all the posts
+        posts.reversed().forEach { post ->
+            Text(text = post, modifier = Modifier.align(Alignment.CenterHorizontally))
+        }
+
+        // Post creation menu (visible when isPostMenuVisible is true)
+        if (isPostMenuVisible) {
+            OutlinedTextField(
+                value = postText,
+                onValueChange = { postText = it },
+                label = { Text("Write your post") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Button(onClick = {
+                posts = posts + postText  // Add the new post to the list
+                postText = ""  // Clear the input field
+                isPostMenuVisible = false  // Hide the post creation menu
+            }) {
+                Text("Post")
+            }
+        }
+
+        // Plus button to toggle post creation menu
+        Button(onClick = { isPostMenuVisible = !isPostMenuVisible }) {
+            Text("+")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))  // Space between the plus button and dashboard
+        BottomDashboard()
     }
 }
 
@@ -99,7 +99,7 @@ fun BottomDashboard() {
                 title = "Global",
                 icon = Icons.Default.Home,
                 onClick = {
-                    val intent = Intent(context, GlobalPage::class.java)  // Replace with your Activity
+                    val intent = Intent(context, GlobalPage::class.java)
                     context.startActivity(intent)
                 }
             )
@@ -108,7 +108,7 @@ fun BottomDashboard() {
                 title = "Search",
                 icon = Icons.Default.Search,
                 onClick = {
-                    val intent = Intent(context, UserSearchPage::class.java)  // Replace with your Activity
+                    val intent = Intent(context, UserSearchPage::class.java)
                     context.startActivity(intent)
                 }
             )
@@ -117,7 +117,7 @@ fun BottomDashboard() {
                 title = "Profile",
                 icon = Icons.Default.AccountCircle,
                 onClick = {
-                    val intent = Intent(context, ProfilePage::class.java)  // Replace with your Activity
+                    val intent = Intent(context, ProfilePage::class.java)
                     context.startActivity(intent)
                 }
             )
@@ -137,4 +137,3 @@ fun DashboardButton(title: String, icon: androidx.compose.ui.graphics.vector.Ima
         Text(text = title)
     }
 }
-

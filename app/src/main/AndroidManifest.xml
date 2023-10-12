@@ -12,6 +12,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BubbleFrontEnd"
         tools:targetApi="31">
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyCiTiAYNlQBzi982O9zjL_lcnCpFgw2hdQ" />
         <activity
             android:name=".WelcomePage"
             android:exported="true"
@@ -43,11 +46,11 @@
         android:label="global_page_label"
         android:theme="@style/Theme.BubbleFrontEnd">
         </activity>
-    <activity
-    android:name=".UserSearchPage"
-    android:label="user_search_page_label"
-    android:theme="@style/Theme.BubbleFrontEnd">
-    </activity>
+        <activity
+        android:name=".UserSearchPage"
+        android:label="user_search_page_label"
+        android:theme="@style/Theme.BubbleFrontEnd">
+        </activity>
 
 
     </application>

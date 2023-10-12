@@ -38,7 +38,6 @@ fun ProfileScreen(){
     ){
         // Temporary location for search button feature. Should probably move to its own page
         TempTitle()
-        LogoutButton()
     }
 }
 
