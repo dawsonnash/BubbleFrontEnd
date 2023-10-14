@@ -1,10 +1,12 @@
 package com.example.bubblefrontend
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -120,11 +123,16 @@ fun ProfileIcon(modifier: Modifier = Modifier) {
 
 @Composable
 fun SettingsIcon() {
+    val context = LocalContext.current
     Icon(
         imageVector = Icons.Default.Settings,
         contentDescription = "Settings",
         modifier = Modifier
             .padding(16.dp)
             .size(24.dp)
+            .clickable {
+                val intent = Intent(context, SettingsPage::class.java)
+                context.startActivity(intent)
+            }
     )
 }

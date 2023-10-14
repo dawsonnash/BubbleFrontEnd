@@ -1,6 +1,8 @@
 package com.example.bubblefrontend
 
 import android.os.Bundle
+import android.content.Context
+import android.content.SharedPreferences
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -41,6 +43,9 @@ class LoginPage : ComponentActivity() {
 @Composable
 fun Login() {
     val context = LocalContext.current              // For transitioning to other activities
+    // For storing user info on registration
+    val sharedPreferences: SharedPreferences = context.getSharedPreferences("AccountDetails", Context.MODE_PRIVATE)
+    val editor: SharedPreferences.Editor = sharedPreferences.edit()
 
 
     Column(
@@ -84,7 +89,7 @@ fun Login() {
         Button(
             onClick = {
                 val apiHandler = ApiHandler()
-                apiHandler.handleLogin(username, password, context)
+                apiHandler.handleLogin(username, password, context, editor)
             }
         ) {
             Text("Login")

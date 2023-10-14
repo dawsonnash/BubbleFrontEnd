@@ -1,6 +1,7 @@
 package com.example.bubblefrontend.api
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.content.Intent
 import android.widget.Toast
 import com.example.bubblefrontend.GlobalPage
@@ -13,7 +14,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 class ApiHandler {
 
-    fun handleLogin(username: String, password: String, context: Context) {
+    fun handleLogin(username: String, password: String, context: Context, editor: SharedPreferences.Editor) {
 
         val retrofit = Retrofit.Builder()
             .baseUrl("http://54.202.77.126:8080")
@@ -34,9 +35,14 @@ class ApiHandler {
 
                     if (!token.isNullOrEmpty()) {
                         // Successfully authenticated
-                        // Have token, need to storemaybe? Look into SharedPreferences
+                        // Storing token
+                        editor.putString("token", token)
+                        editor.apply()
+                        // Navigate to Global
                         val intent = Intent(context, GlobalPage::class.java)
                         context.startActivity(intent)
+
+
                     } else {
                         Toast.makeText(context, "Authentication failed", Toast.LENGTH_LONG).show()
                     }
