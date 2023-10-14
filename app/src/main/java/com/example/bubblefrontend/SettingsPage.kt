@@ -37,7 +37,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.content.Context
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
+import com.example.bubblefrontend.api.ApiHandler
+import com.example.bubblefrontend.api.ProfileResponse
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
 
 class SettingsPage : ComponentActivity() {
@@ -61,8 +64,40 @@ fun SettingsScreen() {
     val sharedPreferences: SharedPreferences = context.getSharedPreferences("AccountDetails", Context.MODE_PRIVATE)
     storedToken = sharedPreferences.getString("token", "No token found") ?: "No token found"
 
-
+Column() {
     Text("Stored Token: $storedToken")
+    UserProfile()
+}
 
+}
 
+@Composable
+fun UserProfile() {
+    val context = LocalContext.current
+
+    val prefs = context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+    val token = prefs.getString("token", "") ?: ""
+    val username = "yourUsername"  // Replace with actual username
+
+    val profileData = remember { mutableStateOf<ProfileResponse?>(null) }
+
+    LaunchedEffect(Unit) {
+        val apiHandler = ApiHandler()
+        apiHandler.handleProfile(username, token, context) {
+            profileData.value = it
+        }
+    }
+
+    val profile = profileData.value
+
+    if (profile != null) {
+        // UI to display profile
+        Text(text = "Name: ${profile.name}")
+        Text(text = "Username: ${profile.username}")
+        // Text(text = "Bio: ${profile.bio}")
+        // And so on
+    } else {
+        // Loading or error state
+        Text("Loading...")
+    }
 }

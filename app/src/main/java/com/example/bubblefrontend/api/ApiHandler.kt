@@ -119,4 +119,28 @@ class ApiHandler {
 
     }
 
+    fun handleProfile(username: String, token: String, context: Context, onSuccess: (ProfileResponse) -> Unit) {
+        val retrofit = Retrofit.Builder()
+            .baseUrl("http://54.202.77.126:8080")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        val apiService = retrofit.create(ApiMethods::class.java)
+
+        val call = apiService.getProfile("Bearer $token", username)
+
+        call.enqueue(object : Callback<ProfileResponse> {
+            override fun onResponse(call: Call<ProfileResponse>, response: Response<ProfileResponse>) {
+                if (response.isSuccessful) {
+                    onSuccess(response.body()!!)
+                } else {
+                    // Handle error
+                }
+            }
+            override fun onFailure(call: Call<ProfileResponse>, t: Throwable) {
+                // Handle failure
+            }
+        })
+    }
+
 }

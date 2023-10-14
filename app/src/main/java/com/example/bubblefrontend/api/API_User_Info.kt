@@ -11,3 +11,13 @@ data class RegistrationRequest(
     val name: String
 )
 data class RegistrationResponse(val message: String)
+
+data class ProfileResponse(
+    val name: String,
+    val username: String,
+    val profilePicture: String,
+    val bio: String,
+    val accountCreated: String,
+    val editable: Boolean
+)
+
