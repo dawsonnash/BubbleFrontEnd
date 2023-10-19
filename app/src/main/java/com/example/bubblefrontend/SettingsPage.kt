@@ -48,7 +48,8 @@ class SettingsPage : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             BubbleFrontEndTheme {
-               SettingsScreen()
+               //SettingsScreen()
+                UserProfile()
             }
         }
     }
@@ -60,11 +61,17 @@ fun SettingsScreen() {
     val context = LocalContext.current              // For transitioning to other activities
 
     var storedToken by remember { mutableStateOf("") }
+    var storedUsername by remember { mutableStateOf("") }
 
     val sharedPreferences: SharedPreferences = context.getSharedPreferences("AccountDetails", Context.MODE_PRIVATE)
     storedToken = sharedPreferences.getString("token", "No token found") ?: "No token found"
+    storedUsername = sharedPreferences.getString("username", "No username found") ?: "No username found"
 
-    Text("Stored Token: $storedToken")
+
+    Column() {
+        Text("Stored Token: $storedToken")
+        Text(text = "Username: $storedUsername")
+    }
 
 
 
@@ -74,6 +81,7 @@ fun SettingsScreen() {
 fun UserProfile() {
     val context = LocalContext.current
     val profileData = remember { mutableStateOf<ProfileResponse?>(null) }
+    val errorMessage = remember { mutableStateOf<String?>(null) } // Added to store the error message
 
     LaunchedEffect(Unit) {
         val apiHandler = ApiHandler()
@@ -81,11 +89,8 @@ fun UserProfile() {
             onSuccess = { profile ->
                 profileData.value = profile
             },
-            onError = { errorMessage ->
-                // Handle the error, e.g., show an error message
-                // You can use a Snackbar or some other UI element to display errors
-                // For simplicity, we'll use a Text composable here
-               // Text(errorMessage)
+            onError = { error ->
+                errorMessage.value = error // Store the error message
             }
         )
     }
@@ -103,6 +108,9 @@ fun UserProfile() {
         Text(text = "Username: ${profile.username}")
         // Text(text = "Bio: ${profile.bio}")
         // And so on
+    } else if (errorMessage.value != null) {
+        // Error state - display the error message
+        Text(text = "Error: ${errorMessage.value}")
     } else {
         // Loading state
         Text("Loading...")

@@ -175,7 +175,7 @@ class ApiHandler {
             }
 
             override fun onFailure(call: Call<ProfileResponse>, t: Throwable) {
-                onError("Network error")
+                onError("Network error, bro!")
             }
         })
     }
