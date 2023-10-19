@@ -1,5 +1,6 @@
 package com.example.bubblefrontend
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -17,13 +18,29 @@ import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
 class WelcomePage : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            BubbleFrontEndTheme {
+
+        // Get SharedPreferences for AccountDetails for isLoggedIn
+        val accountSharedPreferences = getSharedPreferences("AccountDetails", Context.MODE_PRIVATE)
+
+        // Check if the user is logged in
+        val isLoggedIn = accountSharedPreferences.getBoolean("isLoggedIn", false)
+
+        if (isLoggedIn) {
+            // User is logged in, navigate to the GlobalPage
+            val intent = Intent(this, GlobalPage::class.java)
+            startActivity(intent)
+            finish() // Optional: Finish the WelcomePage so the user can't go back to it
+        } else {
+            // User is not logged in, continue displaying the WelcomePage
+            setContent {
+                BubbleFrontEndTheme {
                     WelcomeScreen()
+                }
             }
         }
     }
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

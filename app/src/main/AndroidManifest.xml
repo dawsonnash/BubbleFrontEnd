@@ -20,7 +20,7 @@
         <activity
             android:name=".WelcomePage"
             android:exported="true"
-            android:label="@string/welcome_page_label"
+            android:label="welcome_page_label"
             android:theme="@style/Theme.BubbleFrontEnd">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

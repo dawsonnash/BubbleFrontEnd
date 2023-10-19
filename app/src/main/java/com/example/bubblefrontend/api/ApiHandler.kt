@@ -37,8 +37,12 @@ class ApiHandler {
                         // Successfully authenticated
                         // Storing token
                         editor.putString("token", token)
+
                         // Putting the entered username into SharedPreferences, NOT a response string from the server
                         editor.putString("username", username)
+
+                        // Storing isLoggedIn as true.
+                        editor.putBoolean("isLoggedIn", true)
 
                         editor.apply()
                         // Navigate to Global
