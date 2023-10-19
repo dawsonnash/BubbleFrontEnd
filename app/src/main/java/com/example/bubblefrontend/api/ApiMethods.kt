@@ -19,5 +19,14 @@ interface ApiMethods {
         @Header("Authorization") authHeader: String,
         @Path("username") username: String
     ): Call<ProfileResponse>
+
+    @POST("/account/{username}")
+    // Maybe look into suspend fun?
+    fun editProfile(
+        @Header("Authorization") token: String,
+        @Path("username") username: String,
+        @Body request: EditProfileRequest
+    ): Call<EditProfileResponse>
+
 }
 

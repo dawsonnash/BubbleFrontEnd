@@ -6,9 +6,6 @@
     <string name="global_page_label">BubbleFrontEnd</string>
     <string name="user_search_page_label">BubbleFrontEnd</string>
     <string name="settings_page_label">BubbleFrontEnd</string>
-
-
-
-
+    <string name="edit_profile_page_label">BubbleFrontEnd</string>
 
 </resources>

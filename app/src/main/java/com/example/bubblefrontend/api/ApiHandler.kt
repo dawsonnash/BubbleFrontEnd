@@ -191,5 +191,62 @@ class ApiHandler {
         })
     }
 
+    fun handleEditProfile(token: String, bio: String, name: String, context: Context) {
+
+        val retrofit = Retrofit.Builder()
+            .baseUrl("http://54.202.77.126:8080")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        val apiService = retrofit.create(ApiMethods::class.java)
+        val editProfileRequest = EditProfileRequest(bio, name)
+
+        // Access stored token and username from existing "Account Details" in SharedPreferences for server call
+        val accountSharedPreferences = context.getSharedPreferences("AccountDetails", Context.MODE_PRIVATE)
+        val token = accountSharedPreferences.getString("token", "") ?: ""
+        val storedUsername = accountSharedPreferences.getString("username", "")
+
+        val call =
+            storedUsername?.let { apiService.editProfile("Bearer $token", it, editProfileRequest) }
+
+        call?.enqueue(object : Callback<EditProfileResponse> {
+            override fun onResponse(
+                call: Call<EditProfileResponse>,
+                response: Response<EditProfileResponse>
+            ) {
+                if (response.isSuccessful) {
+                    val editProfileResponse = response.body()
+                    val message = editProfileResponse?.message
+
+                    if (!message.isNullOrEmpty()) {
+                        // Edit was successful
+                        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                    }
+                } else {
+                    // Handle error codes based on API doc
+                    when (response.code()) {
+                        400 -> {
+                            Toast.makeText(context, "Unable to update bio", Toast.LENGTH_LONG)
+                                .show()
+                        }
+
+                        404 -> {
+                            Toast.makeText(context, "Account does not exist", Toast.LENGTH_LONG)
+                                .show()
+                        }
+
+                        else -> {
+                            // Unknown errors
+                            Toast.makeText(context, "Unknown error", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }
+            }
+
+            override fun onFailure(call: Call<EditProfileResponse>, t: Throwable) {
+                Toast.makeText(context, "Network error, bruh", Toast.LENGTH_LONG).show()
+            }
+        })
+    }
 
 }

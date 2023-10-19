@@ -20,7 +20,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -70,9 +74,9 @@ fun ProfileScreen() {
         )
     }
     // Read profile data from SharedPreferences
-    val sharedPreferences = context.getSharedPreferences("ProfileData", Context.MODE_PRIVATE)
-    val name = sharedPreferences.getString("name", "")
-    val username = sharedPreferences.getString("username", "")
+    val profileSharedPreferences = context.getSharedPreferences("ProfileData", Context.MODE_PRIVATE)
+    val name = profileSharedPreferences.getString("name", "")
+    val username = profileSharedPreferences.getString("username", "")
 
     if (profileData.value != null) {
         // UI to display profile
@@ -92,6 +96,7 @@ fun ProfileScreen() {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
+
                     ProfileIcon(
                         Modifier.padding(start = 16.dp, top = 16.dp)
                     )
@@ -105,14 +110,17 @@ fun ProfileScreen() {
                 )
 
                 // Bio
-                Text(
-                    text = "${profile.bio}",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    modifier = Modifier.padding(start = 16.dp, top = 8.dp)
-                )
+                Row(modifier = Modifier.padding(end = 16.dp)) {
+                    Text(
+                        text = "${profile.bio}",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        modifier = Modifier.padding(start = 16.dp, top = 8.dp)
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    EditProfileButton(context)
+                }
 
-                // This Spacer will take all available space, pushing the BottomDashboard to the bottom
                 Spacer(
                     modifier = Modifier.weight(1f)
                 )
@@ -125,7 +133,7 @@ fun ProfileScreen() {
         }
 
     } else if (errorMessage.value != null) {
-        // Error state - display the error message
+        // Display the error message
         Text(text = "Error: ${errorMessage.value}")
     } else {
         // Loading state
@@ -153,6 +161,27 @@ fun ProfileIcon(modifier: Modifier = Modifier) {
         )
     }
 }
+@Composable
+fun EditProfileButton(context: Context){
+    Button(
+        onClick = {
+            val intent = Intent(context, EditProfilePage::class.java)
+            context.startActivity(intent)
+
+        },
+    // Make button transparent
+    ){
+        Image(
+            painter = painterResource(id = R.drawable.baseline_edit_24),
+            contentDescription = "Profile Picture",
+        )
+        Text(
+            text = "Edit Profile",
+            fontSize = 10.sp
+        )
+    }
+}
+
 
 
 @Composable

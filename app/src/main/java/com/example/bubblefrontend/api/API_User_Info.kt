@@ -21,3 +21,10 @@ data class ProfileResponse(
     val editable: Boolean
 )
 
+data class EditProfileRequest(
+    val bio: String,
+    val name: String
+)
+
+data class EditProfileResponse(val message: String)
+
