@@ -37,6 +37,8 @@ class ApiHandler {
                         // Successfully authenticated
                         // Storing token
                         editor.putString("token", token)
+                        editor.putString("username", username)
+
                         editor.apply()
                         // Navigate to Global
                         val intent = Intent(context, GlobalPage::class.java)
@@ -119,28 +121,64 @@ class ApiHandler {
 
     }
 
-    fun handleProfile(username: String, token: String, context: Context, onSuccess: (ProfileResponse) -> Unit) {
+    fun handleProfile(context: Context, onSuccess: (ProfileResponse) -> Unit, onError: (String) -> Unit) {
+        // Initialize SharedPreferences for profile data
+        val profileSharedPreferences = context.getSharedPreferences("ProfileData", Context.MODE_PRIVATE)
+        val profileEditor = profileSharedPreferences.edit()
+
+        // Retrofit instance
         val retrofit = Retrofit.Builder()
             .baseUrl("http://54.202.77.126:8080")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
+        // Using API - have to make an instance
         val apiService = retrofit.create(ApiMethods::class.java)
 
-        val call = apiService.getProfile("Bearer $token", username)
+        // Access stored token and username from SharedPreferences
+        val sharedPreferences = context.getSharedPreferences("AccountDetails", Context.MODE_PRIVATE)
+        val token = sharedPreferences.getString("token", "") ?: ""
+        val storedUsername = sharedPreferences.getString("username", "")
 
-        call.enqueue(object : Callback<ProfileResponse> {
+        // Begin call
+        val call = storedUsername?.let { apiService.getProfile("Bearer $token", it) }
+
+        call?.enqueue(object : Callback<ProfileResponse> {
             override fun onResponse(call: Call<ProfileResponse>, response: Response<ProfileResponse>) {
                 if (response.isSuccessful) {
-                    onSuccess(response.body()!!)
+                    val profileData = response.body()
+
+                    // Check if profileData is not null
+                    if (profileData != null) {
+                        // Store the profile data in the "ProfileData" SharedPreferences file
+                        profileEditor.putString("name", profileData.name)
+                        profileEditor.putString("username", profileData.username)
+                        profileEditor.putString("profilePicture", profileData.profilePicture)
+                        profileEditor.putString("bio", profileData.bio)
+                        profileEditor.putString("accountCreated", profileData.accountCreated)
+                        profileEditor.putBoolean("editable", profileData.editable)
+                        profileEditor.apply()
+
+                        onSuccess(profileData)
+                    } else {
+                        onError("Failed to retrieve profile data")
+                    }
                 } else {
-                    // Handle error
+                    // Handle API doc errors
+                    val errorMessage = when (response.code()) {
+                        404 -> "Account does not exist"
+                        500 -> "Internal Server Error"
+                        else -> "Unknown error occurred"
+                    }
+                    onError(errorMessage)
                 }
             }
+
             override fun onFailure(call: Call<ProfileResponse>, t: Throwable) {
-                // Handle failure
+                onError("Network error")
             }
         })
     }
+
 
 }

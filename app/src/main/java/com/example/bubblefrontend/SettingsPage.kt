@@ -48,7 +48,7 @@ class SettingsPage : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             BubbleFrontEndTheme {
-                SettingsScreen()
+               SettingsScreen()
             }
         }
     }
@@ -64,40 +64,47 @@ fun SettingsScreen() {
     val sharedPreferences: SharedPreferences = context.getSharedPreferences("AccountDetails", Context.MODE_PRIVATE)
     storedToken = sharedPreferences.getString("token", "No token found") ?: "No token found"
 
-Column() {
     Text("Stored Token: $storedToken")
-    UserProfile()
-}
+
+
 
 }
 
 @Composable
 fun UserProfile() {
     val context = LocalContext.current
-
-    val prefs = context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
-    val token = prefs.getString("token", "") ?: ""
-    val username = "yourUsername"  // Replace with actual username
-
     val profileData = remember { mutableStateOf<ProfileResponse?>(null) }
 
     LaunchedEffect(Unit) {
         val apiHandler = ApiHandler()
-        apiHandler.handleProfile(username, token, context) {
-            profileData.value = it
-        }
+        apiHandler.handleProfile(context,
+            onSuccess = { profile ->
+                profileData.value = profile
+            },
+            onError = { errorMessage ->
+                // Handle the error, e.g., show an error message
+                // You can use a Snackbar or some other UI element to display errors
+                // For simplicity, we'll use a Text composable here
+               // Text(errorMessage)
+            }
+        )
     }
 
-    val profile = profileData.value
+    // Read profile data from SharedPreferences
+    val sharedPreferences = context.getSharedPreferences("ProfileData", Context.MODE_PRIVATE)
+    val name = sharedPreferences.getString("name", "")
+    val username = sharedPreferences.getString("username", "")
 
-    if (profile != null) {
+    if (profileData.value != null) {
         // UI to display profile
+        val profile = profileData.value!!
+
         Text(text = "Name: ${profile.name}")
         Text(text = "Username: ${profile.username}")
         // Text(text = "Bio: ${profile.bio}")
         // And so on
     } else {
-        // Loading or error state
+        // Loading state
         Text("Loading...")
     }
 }
