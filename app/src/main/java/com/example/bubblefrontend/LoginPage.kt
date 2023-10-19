@@ -44,6 +44,7 @@ class LoginPage : ComponentActivity() {
 fun Login() {
     val context = LocalContext.current              // For transitioning to other activities
     // For storing user info on registration
+    // Could delete handleLogin parameters and store SharedPreferences directly in the function
     val sharedPreferences: SharedPreferences = context.getSharedPreferences("AccountDetails", Context.MODE_PRIVATE)
     val editor: SharedPreferences.Editor = sharedPreferences.edit()
 

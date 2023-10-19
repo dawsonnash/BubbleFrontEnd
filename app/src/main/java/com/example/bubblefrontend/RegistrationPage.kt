@@ -163,7 +163,7 @@ fun Registration() {
                 if (password == confirmPassword) {
 
                     val apiHandler = ApiHandler()
-                    apiHandler.handleRegistration(username, password, firstName, email, context)
+                    apiHandler.handleRegistration(email, firstName, username, password, context)
                 }
                 else{
                     Toast.makeText(context, "Passwords do not match", Toast.LENGTH_LONG).show()

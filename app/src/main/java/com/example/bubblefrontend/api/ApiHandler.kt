@@ -37,6 +37,7 @@ class ApiHandler {
                         // Successfully authenticated
                         // Storing token
                         editor.putString("token", token)
+                        // Putting the entered username into SharedPreferences, NOT a response string from the server
                         editor.putString("username", username)
 
                         editor.apply()
@@ -71,7 +72,7 @@ class ApiHandler {
         })
     }
 
-    fun handleRegistration(username: String, password: String, firstName: String, email: String, context: Context){
+    fun handleRegistration(email: String, firstName: String, username: String, password: String, context: Context){
 
         val retrofit = Retrofit.Builder()
             .baseUrl("http://54.202.77.126:8080")
@@ -80,7 +81,7 @@ class ApiHandler {
 
         val apiService = retrofit.create(ApiMethods::class.java)
 
-        val registrationRequest = RegistrationRequest(username, password, firstName, email)  // Need to add last name
+        val registrationRequest = RegistrationRequest(email, firstName, username, password)  // Need to add last name
         val call = apiService.registerUser(registrationRequest)
 
         call.enqueue(object : Callback<RegistrationResponse> {
@@ -122,44 +123,50 @@ class ApiHandler {
     }
 
     fun handleProfile(context: Context, onSuccess: (ProfileResponse) -> Unit, onError: (String) -> Unit) {
-        // Initialize SharedPreferences for profile data
-        val profileSharedPreferences = context.getSharedPreferences("ProfileData", Context.MODE_PRIVATE)
-        val profileEditor = profileSharedPreferences.edit()
 
-        // Retrofit instance
+        // Standard Retrofit instance
         val retrofit = Retrofit.Builder()
             .baseUrl("http://54.202.77.126:8080")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
-        // Using API - have to make an instance
+        // Using API - always have to make an instance
         val apiService = retrofit.create(ApiMethods::class.java)
 
-        // Access stored token and username from SharedPreferences
-        val sharedPreferences = context.getSharedPreferences("AccountDetails", Context.MODE_PRIVATE)
-        val token = sharedPreferences.getString("token", "") ?: ""
-        val storedUsername = sharedPreferences.getString("username", "")
+        // Initialize SharedPreferences for profile data
+        val profileSharedPreferences = context.getSharedPreferences("ProfileData", Context.MODE_PRIVATE)
+        val profileEditor = profileSharedPreferences.edit()
 
-        // Begin call
+        // Access stored token and username from existing "Account Details" in SharedPreferences for server call
+        val accountSharedPreferences = context.getSharedPreferences("AccountDetails", Context.MODE_PRIVATE)
+        val token = accountSharedPreferences.getString("token", "") ?: ""
+        val storedUsername = accountSharedPreferences.getString("username", "")
+
+        // Begin server call
         val call = storedUsername?.let { apiService.getProfile("Bearer $token", it) }
 
+        // Response from server. Success or failure logic
         call?.enqueue(object : Callback<ProfileResponse> {
             override fun onResponse(call: Call<ProfileResponse>, response: Response<ProfileResponse>) {
                 if (response.isSuccessful) {
-                    val profileData = response.body()
 
-                    // Check if profileData is not null
-                    if (profileData != null) {
+                    // Stores the JSON response from the server into the ProfileResponse data class
+                    val profileResponse = response.body()
+
+
+                    // Check if profileResponse is not null. I.e, does the account exist & does it have data
+                    if (profileResponse != null) {
                         // Store the profile data in the "ProfileData" SharedPreferences file
-                        profileEditor.putString("name", profileData.name)
-                        profileEditor.putString("username", profileData.username)
-                        profileEditor.putString("profilePicture", profileData.profilePicture)
-                        profileEditor.putString("bio", profileData.bio)
-                        profileEditor.putString("accountCreated", profileData.accountCreated)
-                        profileEditor.putBoolean("editable", profileData.editable)
+                        profileEditor.putString("name", profileResponse.name)
+                        profileEditor.putString("username", profileResponse.username)
+                        profileEditor.putString("profilePicture", profileResponse.profilePicture)
+                        profileEditor.putString("bio", profileResponse.bio)
+                        profileEditor.putString("accountCreated", profileResponse.accountCreated)
+                        profileEditor.putBoolean("editable", profileResponse.editable)
                         profileEditor.apply()
 
-                        onSuccess(profileData)
+                        // This tells the profile page that it was a success, in the LaunchedEffect coroutine
+                        onSuccess(profileResponse)
                     } else {
                         onError("Failed to retrieve profile data")
                     }

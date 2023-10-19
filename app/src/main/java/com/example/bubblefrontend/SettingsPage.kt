@@ -94,7 +94,6 @@ fun UserProfile() {
             }
         )
     }
-
     // Read profile data from SharedPreferences
     val sharedPreferences = context.getSharedPreferences("ProfileData", Context.MODE_PRIVATE)
     val name = sharedPreferences.getString("name", "")
@@ -104,8 +103,11 @@ fun UserProfile() {
         // UI to display profile
         val profile = profileData.value!!
 
-        Text(text = "Name: ${profile.name}")
-        Text(text = "Username: ${profile.username}")
+        Column() {
+            Text(text = "Name: ${profile.name}")
+            Text(text = "Username: ${profile.username}")
+            Text(text = "Bio: ${profile.bio}")
+        }
         // Text(text = "Bio: ${profile.bio}")
         // And so on
     } else if (errorMessage.value != null) {
