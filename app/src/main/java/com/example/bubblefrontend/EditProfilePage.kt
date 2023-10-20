@@ -42,11 +42,6 @@ fun EditProfileScreen() {
     val context = LocalContext.current
     var newBio by remember { mutableStateOf("") }
 
-    // Read account data from accountSharedPreferences
-    val accountSharedPreferences = context.getSharedPreferences("AccountDetails", Context.MODE_PRIVATE)
-    val token = accountSharedPreferences.getString("token", "")
-    val username = accountSharedPreferences.getString("username", "")
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -85,14 +80,8 @@ fun EditProfileScreen() {
 
                     // Send the bio update request
                     val apiHandler = ApiHandler()
-                    if (token != null && username != null) {
-                            apiHandler.handleEditProfile(token, newBio, username, context)
-                    }
-                    else(
-                            Toast.makeText(context, "Something went WRONG dawg", Toast.LENGTH_LONG)
-                                .show()
+                    apiHandler.handleEditProfile(newBio, context)
 
-                    )
                 }
             ),
             modifier = Modifier.fillMaxWidth()
@@ -100,8 +89,6 @@ fun EditProfileScreen() {
 
         Spacer(modifier = Modifier.weight(1f))
 
-
-        // Adding the BottomDashboard at the bottom
         BottomDashboard()
     }
 }

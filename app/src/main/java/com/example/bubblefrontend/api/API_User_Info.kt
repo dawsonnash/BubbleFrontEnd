@@ -26,5 +26,7 @@ data class EditProfileRequest(
     val name: String
 )
 
-data class EditProfileResponse(val message: String)
-
+data class EditProfileResponse(
+    val message: String?,
+    val error: String?
+)
