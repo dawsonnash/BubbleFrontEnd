@@ -6,6 +6,7 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 
 interface ApiMethods {
@@ -25,8 +26,10 @@ interface ApiMethods {
         @Path("username") username: String
     ): Call<ProfileResponse>
 
+
+    // Server side is .put
     @POST("api/account/{username}")
-    // Maybe look into suspend fun?
+// Maybe look into suspend fun?
     fun editProfile(
         @Header("Authorization") authHeader: String,
         @Path("username") username: String,

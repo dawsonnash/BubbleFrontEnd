@@ -212,6 +212,7 @@ class ApiHandler {
 
         val editProfileRequest = EditProfileRequest(bio, name)
 
+        //val call = apiService.editProfile(token, storedUsername, editProfileRequest)
         val call = storedUsername.let { apiService.editProfile("Bearer $token", it, editProfileRequest) }
 
         call.enqueue(object : Callback<EditProfileResponse> {
