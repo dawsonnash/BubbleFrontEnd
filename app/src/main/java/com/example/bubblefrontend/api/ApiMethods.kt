@@ -28,7 +28,7 @@ interface ApiMethods {
 
 
     // Server side is .put
-    @POST("api/account/{username}")
+    @PUT("api/account/{username}")
 // Maybe look into suspend fun?
     fun editProfile(
         @Header("Authorization") authHeader: String,

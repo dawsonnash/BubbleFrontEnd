@@ -22,11 +22,11 @@ data class ProfileResponse(
 )
 
 data class EditProfileRequest(
-    val bio: String,
-    val name: String
+    val newBio: String,
+    val newName: String
 )
 
 data class EditProfileResponse(
-    val message: String?,
+    val message: String,
     val error: String?
 )

@@ -234,6 +234,7 @@ class ApiHandler {
                     when (response.code()) {
                         400 -> Toast.makeText(context, "Unable to update bio", Toast.LENGTH_LONG).show()
                         404 -> Toast.makeText(context, "Account does not exist", Toast.LENGTH_LONG).show()
+                        500 -> Toast.makeText(context, "Internal server error", Toast.LENGTH_LONG).show()
                         else -> Toast.makeText(context, "Unknown error", Toast.LENGTH_LONG).show()
                     }
 
