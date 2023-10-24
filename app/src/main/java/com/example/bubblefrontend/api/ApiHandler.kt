@@ -1,6 +1,8 @@
 package com.example.bubblefrontend.api
 
 import android.content.Context
+import android.util.Log
+import android.content.SharedPreferences
 import android.content.Intent
 import android.widget.Toast
 import com.example.bubblefrontend.GlobalPage
@@ -13,7 +15,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 class ApiHandler {
 
-    fun handleLogin(username: String, password: String, context: Context) {
+    fun handleLogin(username: String, password: String, context: Context, editor: SharedPreferences.Editor) {
 
         val retrofit = Retrofit.Builder()
             .baseUrl("http://54.202.77.126:8080")
@@ -34,9 +36,21 @@ class ApiHandler {
 
                     if (!token.isNullOrEmpty()) {
                         // Successfully authenticated
-                        // Have token, need to storemaybe? Look into SharedPreferences
+                        // Storing token
+                        editor.putString("token", token)
+
+                        // Putting the entered username into SharedPreferences, NOT a response string from the server
+                        editor.putString("username", username)
+
+                        // Storing isLoggedIn as true.
+                        editor.putBoolean("isLoggedIn", true)
+
+                        editor.apply()
+                        // Navigate to Global
                         val intent = Intent(context, GlobalPage::class.java)
                         context.startActivity(intent)
+
+
                     } else {
                         Toast.makeText(context, "Authentication failed", Toast.LENGTH_LONG).show()
                     }
@@ -58,12 +72,13 @@ class ApiHandler {
 
             override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
                 // for network failures
+                Log.d("Debug", "Network error details: ${t.localizedMessage}")
                 Toast.makeText(context, "Network error", Toast.LENGTH_LONG).show()
             }
         })
     }
 
-    fun handleRegistration(username: String, password: String, firstName: String, email: String, context: Context){
+    fun handleRegistration(email: String, firstName: String, username: String, password: String, context: Context){
 
         val retrofit = Retrofit.Builder()
             .baseUrl("http://54.202.77.126:8080")
@@ -72,7 +87,7 @@ class ApiHandler {
 
         val apiService = retrofit.create(ApiMethods::class.java)
 
-        val registrationRequest = RegistrationRequest(username, password, firstName, email)  // Need to add last name
+        val registrationRequest = RegistrationRequest(email, firstName, username, password)  // Need to add last name
         val call = apiService.registerUser(registrationRequest)
 
         call.enqueue(object : Callback<RegistrationResponse> {
@@ -111,6 +126,132 @@ class ApiHandler {
             }
         })
 
+    }
+
+    fun handleProfile(context: Context, onSuccess: (ProfileResponse) -> Unit, onError: (String) -> Unit) {
+
+            // Standard Retrofit instance
+            val retrofit = Retrofit.Builder()
+                .baseUrl("http://54.202.77.126:8080")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+
+            // Using API - always have to make an instance
+            val apiService = retrofit.create(ApiMethods::class.java)
+
+            // Initialize SharedPreferences for profile data
+            val profileSharedPreferences = context.getSharedPreferences("ProfileData", Context.MODE_PRIVATE)
+            val profileEditor = profileSharedPreferences.edit()
+
+            // Access stored token and username from existing "Account Details" in SharedPreferences for server call
+            val accountSharedPreferences = context.getSharedPreferences("AccountDetails", Context.MODE_PRIVATE)
+            val token = accountSharedPreferences.getString("token", "") ?: ""
+            val storedUsername = accountSharedPreferences.getString("username", "")
+
+            // Begin server call
+            val call = storedUsername?.let { apiService.getProfile("Bearer $token", it) }
+
+            // Response from server. Success or failure logic
+            call?.enqueue(object : Callback<ProfileResponse> {
+                override fun onResponse(call: Call<ProfileResponse>, response: Response<ProfileResponse>) {
+                    if (response.isSuccessful) {
+
+                        // Stores the JSON response from the server into the ProfileResponse data class
+                        val profileResponse = response.body()
+
+
+                        // Check if profileResponse is not null. I.e, does the account exist & does it have data
+                        if (profileResponse != null) {
+                            // Store the profile data in the "ProfileData" SharedPreferences file
+                            profileEditor.putString("name", profileResponse.name)
+                            profileEditor.putString("username", profileResponse.username)
+                            profileEditor.putString("profilePicture", profileResponse.profilePicture)
+                            profileEditor.putString("bio", profileResponse.bio)
+                            profileEditor.putString("accountCreated", profileResponse.accountCreated)
+                            profileEditor.putBoolean("editable", profileResponse.editable)
+                            profileEditor.apply()
+
+                            // This tells the profile page that it was a success, in the LaunchedEffect coroutine
+                            onSuccess(profileResponse)
+                        } else {
+                            onError("Failed to retrieve profile data")
+                        }
+                    } else {
+                        // Handle API doc errors
+                        val errorMessage = when (response.code()) {
+                            404 -> "Account does not exist"
+                            500 -> "Internal Server Error"
+                            else -> "Unknown error occurred"
+                        }
+                        onError(errorMessage)
+                    }
+                }
+
+                override fun onFailure(call: Call<ProfileResponse>, t: Throwable) {
+                    onError("Network error, bro!")
+                }
+            })
+        }
+
+    fun handleEditProfile(newBio: String, newName: String, context: Context) {
+        val retrofit = Retrofit.Builder()
+            .baseUrl("http://54.202.77.126:8080")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        val apiService = retrofit.create(ApiMethods::class.java)
+
+        val accountSharedPreferences = context.getSharedPreferences("AccountDetails", Context.MODE_PRIVATE)
+        val profileSharedPreferences = context.getSharedPreferences("ProfileData", Context.MODE_PRIVATE)
+
+        val token = accountSharedPreferences.getString("token", "") ?: ""
+        val storedUsername = accountSharedPreferences.getString("username", "") ?: ""
+        val oldName = profileSharedPreferences.getString("name", "") ?: ""
+
+        // Was error - "Account doesn't exist" so tryna log it out
+        Log.d("Debug", "Stored Username: $storedUsername, Token: $token, Name: $newName, Bio: $newBio")
+
+        // Check to see if user did not enter name in field. Should probably separate, and do same fo bio
+        val editProfileRequest: EditProfileRequest = if (newName == "") {
+            EditProfileRequest(newBio, oldName)
+        } else {
+            EditProfileRequest(newBio, newName)
+        }
+
+        val call = storedUsername.let { apiService.editProfile("Bearer $token", it, editProfileRequest) }
+
+        call.enqueue(object : Callback<EditProfileResponse> {
+            override fun onResponse(
+                call: Call<EditProfileResponse>,
+                response: Response<EditProfileResponse>
+            ) {
+                if (response.isSuccessful) {
+                    val editProfileResponse = response.body()
+                    val message = editProfileResponse?.message
+
+                    if (!message.isNullOrEmpty()) {
+                        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                    }
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Log.d("Debug", "Error Body: $errorBody")
+
+                    when (response.code()) {
+                        400 -> Toast.makeText(context, "Unable to update bio", Toast.LENGTH_LONG).show()
+                        404 -> Toast.makeText(context, "Account does not exist", Toast.LENGTH_LONG).show()
+                        500 -> Toast.makeText(context, "Internal server error", Toast.LENGTH_LONG).show()
+                        else -> Toast.makeText(context, "Unknown error", Toast.LENGTH_LONG).show()
+                    }
+
+                    Log.d("Debug", "HTTP Status Code: ${response.code()}")
+                }
+            }
+
+            override fun onFailure(call: Call<EditProfileResponse>, t: Throwable) {
+                Log.d("Debug", "Network error details: ${t.localizedMessage}")
+                Toast.makeText(context, "Network error, bruh", Toast.LENGTH_LONG).show()
+            }
+        })
     }
 
 }

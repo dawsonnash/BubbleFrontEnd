@@ -4,6 +4,9 @@
 
     <uses-permission android:name="android.permission.INTERNET"/>
 
+    <!-- Make sure to remove ClearTextTraffic - allows HTTP traffic-->
+    <!-- Application label should be different than welcome page -->
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -13,6 +16,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.BubbleFrontEnd"
+        android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <meta-data
             android:name="com.google.android.geo.API_KEY"
@@ -20,7 +24,7 @@
         <activity
             android:name=".WelcomePage"
             android:exported="true"
-            android:label="@string/welcome_page_label"
+            android:label="welcome_page_label"
             android:theme="@style/Theme.BubbleFrontEnd">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -53,6 +57,19 @@
         android:label="user_search_page_label"
         android:theme="@style/Theme.BubbleFrontEnd">
         </activity>
+
+        <activity
+            android:name=".SettingsPage"
+            android:label="settings_page_label"
+            android:theme="@style/Theme.BubbleFrontEnd">
+        </activity>
+
+        <activity
+            android:name=".EditProfilePage"
+            android:label="edit_profile_page_label"
+            android:theme="@style/Theme.BubbleFrontEnd">
+        </activity>
+
 
 
     </application>
