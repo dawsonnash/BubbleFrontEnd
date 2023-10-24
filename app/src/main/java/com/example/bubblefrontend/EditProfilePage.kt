@@ -41,6 +41,8 @@ class EditProfilePage : ComponentActivity() {
 fun EditProfileScreen() {
     val context = LocalContext.current
     var newBio by remember { mutableStateOf("") }
+    var newName by remember { mutableStateOf("") }
+
 
     Column(
         modifier = Modifier
@@ -66,6 +68,18 @@ fun EditProfileScreen() {
         }
 
         OutlinedTextField(
+            value = newName,
+            onValueChange = { newName = it },
+            label = { Text("Edit Name") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Next
+            ),
+            modifier = Modifier.fillMaxWidth()
+
+        )
+        OutlinedTextField(
             value = newBio,
             onValueChange = { newBio = it },
             label = { Text("Edit Bio") },
@@ -80,13 +94,12 @@ fun EditProfileScreen() {
 
                     // Send the bio update request
                     val apiHandler = ApiHandler()
-                    apiHandler.handleEditProfile(newBio, context)
+                    apiHandler.handleEditProfile(newBio, newName, context)
 
                 }
             ),
             modifier = Modifier.fillMaxWidth()
         )
-
         Spacer(modifier = Modifier.weight(1f))
 
         BottomDashboard()

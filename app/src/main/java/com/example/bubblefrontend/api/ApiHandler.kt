@@ -192,7 +192,7 @@ class ApiHandler {
             })
         }
 
-    fun handleEditProfile(bio: String, context: Context) {
+    fun handleEditProfile(newBio: String, newName: String, context: Context) {
         val retrofit = Retrofit.Builder()
             .baseUrl("http://54.202.77.126:8080")
             .addConverterFactory(GsonConverterFactory.create())
@@ -205,14 +205,18 @@ class ApiHandler {
 
         val token = accountSharedPreferences.getString("token", "") ?: ""
         val storedUsername = accountSharedPreferences.getString("username", "") ?: ""
-        val name = profileSharedPreferences.getString("name", "") ?: ""
+        val oldName = profileSharedPreferences.getString("name", "") ?: ""
 
-        // Getting error - "Account doesn't exist" so tryna log it out
-        Log.d("Debug", "Stored Username: $storedUsername, Token: $token, Name: $name, Bio: $bio")
+        // Was error - "Account doesn't exist" so tryna log it out
+        Log.d("Debug", "Stored Username: $storedUsername, Token: $token, Name: $newName, Bio: $newBio")
 
-        val editProfileRequest = EditProfileRequest(bio, name)
+        // Check to see if user did not enter name in field. Should probably separate, and do same fo bio
+        val editProfileRequest: EditProfileRequest = if (newName == "") {
+            EditProfileRequest(newBio, oldName)
+        } else {
+            EditProfileRequest(newBio, newName)
+        }
 
-        //val call = apiService.editProfile(token, storedUsername, editProfileRequest)
         val call = storedUsername.let { apiService.editProfile("Bearer $token", it, editProfileRequest) }
 
         call.enqueue(object : Callback<EditProfileResponse> {
