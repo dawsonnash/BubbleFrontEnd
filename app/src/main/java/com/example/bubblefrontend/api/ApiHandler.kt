@@ -18,7 +18,7 @@ class ApiHandler {
     fun handleLogin(username: String, password: String, context: Context, editor: SharedPreferences.Editor) {
 
         val retrofit = Retrofit.Builder()
-            .baseUrl("http://54.202.77.126:8080")
+            .baseUrl("https://54.202.77.126:8080")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
@@ -72,6 +72,7 @@ class ApiHandler {
 
             override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
                 // for network failures
+                Log.d("Debug", "Network error details: ${t.localizedMessage}")
                 Toast.makeText(context, "Network error", Toast.LENGTH_LONG).show()
             }
         })
@@ -80,7 +81,7 @@ class ApiHandler {
     fun handleRegistration(email: String, firstName: String, username: String, password: String, context: Context){
 
         val retrofit = Retrofit.Builder()
-            .baseUrl("http://54.202.77.126:8080")
+            .baseUrl("https://54.202.77.126:8080")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
@@ -131,7 +132,7 @@ class ApiHandler {
 
             // Standard Retrofit instance
             val retrofit = Retrofit.Builder()
-                .baseUrl("http://54.202.77.126:8080")
+                .baseUrl("https://54.202.77.126:8080")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
 
@@ -194,7 +195,7 @@ class ApiHandler {
 
     fun handleEditProfile(newBio: String, newName: String, context: Context) {
         val retrofit = Retrofit.Builder()
-            .baseUrl("http://54.202.77.126:8080")
+            .baseUrl("https://54.202.77.126:8080")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
