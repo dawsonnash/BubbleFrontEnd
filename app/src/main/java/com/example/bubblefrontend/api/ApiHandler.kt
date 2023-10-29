@@ -166,6 +166,7 @@ class ApiHandler {
 
                         // Check if profileResponse is not null. I.e, does the account exist & does it have data
                         if (profileResponse != null) {
+
                             // Store the profile data in the "ProfileData" SharedPreferences file
                             profileEditor.putString("username", profileResponse.username)
                             profileEditor.putInt("uid", profileResponse.uid)
@@ -184,6 +185,24 @@ class ApiHandler {
                             profileEditor.putString("last_accessed_at", profileResponse.last_accessed_at)
                             profileEditor.putBoolean("editable", profileResponse.editable)
                             profileEditor.apply()
+
+                            // Log the profile data for debugging
+                            Log.d("Debug", "Username: ${profileResponse.username}")
+                            Log.d("Debug", "UID: ${profileResponse.uid}")
+                            Log.d("Debug", "Name: ${profileResponse.name}")
+                            Log.d("Debug", "Profile Picture: ${profileResponse.profile_picture}")
+                            Log.d("Debug", "URL: ${profileResponse.url}")
+                            Log.d("Debug", "HTML URL: ${profileResponse.html_url}")
+                            Log.d("Debug", "Followers URL: ${profileResponse.followers_url}")
+                            Log.d("Debug", "Following URL: ${profileResponse.following_url}")
+                            Log.d("Debug", "Bubble Admin: ${profileResponse.bubble_admin}")
+                            Log.d("Debug", "Email: ${profileResponse.email}")
+                            Log.d("Debug", "Bio: ${profileResponse.bio}")
+                            Log.d("Debug", "Followers: ${profileResponse.followers}")
+                            Log.d("Debug", "Following: ${profileResponse.following}")
+                            Log.d("Debug", "Created At: ${profileResponse.created_at}")
+                            Log.d("Debug", "Last Accessed At: ${profileResponse.last_accessed_at}")
+                            Log.d("Debug", "Editable: ${profileResponse.editable}")
 
                             // This tells the profile page that it was a success, in the LaunchedEffect coroutine
                             onSuccess(profileResponse)
