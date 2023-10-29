@@ -1,10 +1,13 @@
 package com.example.bubblefrontend
 
+import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,6 +60,7 @@ fun UserSearchScreen(){
 @Composable
 // Will need to be updated upon working with mySQL database
 fun SearchBar() {
+    val context = LocalContext.current
     var searchQuery by remember { mutableStateOf("") }
     val allUsernames = UserManager.getAllUsernames()
     val filteredUsernames = allUsernames.filter { it.contains(searchQuery, ignoreCase = true) }
@@ -90,5 +95,10 @@ fun SearchBar() {
                 }
             }
         }
+        Spacer(modifier = Modifier.weight(1f))
+       // need to delete - only for database wip
+        val accountSharedPreferences: SharedPreferences =
+            context.getSharedPreferences("AccountDetails", Context.MODE_PRIVATE)
+        LogoutButton(context = context, accountSharedPreferences)
     }
 }

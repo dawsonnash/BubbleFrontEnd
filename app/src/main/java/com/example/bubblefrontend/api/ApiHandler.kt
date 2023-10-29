@@ -148,12 +148,16 @@ class ApiHandler {
             val token = accountSharedPreferences.getString("token", "") ?: ""
             val storedUsername = accountSharedPreferences.getString("username", "")
 
+            // For errors - "Account doesn't exist" so tryna log it out
+            Log.d("Debug", "Stored Username: $storedUsername, Token: $token")
+
             // Begin server call
             val call = storedUsername?.let { apiService.getProfile("Bearer $token", it) }
 
             // Response from server. Success or failure logic
             call?.enqueue(object : Callback<ProfileResponse> {
                 override fun onResponse(call: Call<ProfileResponse>, response: Response<ProfileResponse>) {
+
                     if (response.isSuccessful) {
 
                         // Stores the JSON response from the server into the ProfileResponse data class
@@ -163,11 +167,21 @@ class ApiHandler {
                         // Check if profileResponse is not null. I.e, does the account exist & does it have data
                         if (profileResponse != null) {
                             // Store the profile data in the "ProfileData" SharedPreferences file
-                            profileEditor.putString("name", profileResponse.name)
                             profileEditor.putString("username", profileResponse.username)
-                            profileEditor.putString("profilePicture", profileResponse.profilePicture)
+                            profileEditor.putInt("uid", profileResponse.uid)
+                            profileEditor.putString("name", profileResponse.name)
+                            profileEditor.putString("profile_picture", profileResponse.profile_picture)
+                            profileEditor.putString("url", profileResponse.url)
+                            profileEditor.putString("html_url", profileResponse.html_url)
+                            profileEditor.putString("followers_url", profileResponse.followers_url)
+                            profileEditor.putString("following_url", profileResponse.following_url)
+                            profileEditor.putBoolean("bubble_admin", profileResponse.bubble_admin)
+                            profileEditor.putString("email", profileResponse.email)
                             profileEditor.putString("bio", profileResponse.bio)
-                            profileEditor.putString("accountCreated", profileResponse.accountCreated)
+                            profileEditor.putInt("followers", profileResponse.followers)
+                            profileEditor.putInt("following", profileResponse.following)
+                            profileEditor.putString("created_at", profileResponse.created_at)
+                            profileEditor.putString("last_accessed_at", profileResponse.last_accessed_at)
                             profileEditor.putBoolean("editable", profileResponse.editable)
                             profileEditor.apply()
 
@@ -178,9 +192,12 @@ class ApiHandler {
                         }
                     } else {
                         // Handle API doc errors
+                        val errorBody = response.errorBody()?.string()
+                        Log.d("Debug", "Error Body: $errorBody")
+
                         val errorMessage = when (response.code()) {
                             404 -> "Account does not exist"
-                            500 -> "Internal Server Error"
+                            500 -> "Internal Server Error, bruh"
                             else -> "Unknown error occurred"
                         }
                         onError(errorMessage)
