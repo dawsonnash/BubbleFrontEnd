@@ -1,7 +1,6 @@
 package com.example.bubblefrontend.api
 
 import retrofit2.Call
-import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
@@ -27,7 +26,6 @@ interface ApiMethods {
     ): Call<ProfileResponse>
 
 
-    // Server side is .put
     @PUT("api/account/{username}")
 // Maybe look into suspend fun?
     fun editProfile(
