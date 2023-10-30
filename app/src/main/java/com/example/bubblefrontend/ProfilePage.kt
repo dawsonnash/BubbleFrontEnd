@@ -21,9 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,12 +33,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.modifier.modifierLocalConsumer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.annotation.ExperimentalCoilApi
+import coil.compose.rememberImagePainter
 import com.example.bubblefrontend.api.ApiHandler
 import com.example.bubblefrontend.api.ProfileResponse
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
@@ -91,15 +91,13 @@ fun ProfileScreen() {
                 verticalArrangement = Arrangement.Top
 
             ) {
-                // Top Bar for Settings Icon, Profile Picture, and Friends Count
+                // Top Bar for Settings Icon, Profile Picture, and one day.. Friends Count
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
 
-                    ProfileIcon(
-                        Modifier.padding(start = 16.dp, top = 16.dp)
-                    )
+                    ProfileIcon(context, Modifier.padding(start = 16.dp, top = 16.dp))
                     SettingsIcon()
                 }
                 Text(
@@ -141,8 +139,16 @@ fun ProfileScreen() {
     }
 }
 
+@OptIn(ExperimentalCoilApi::class)
 @Composable
-fun ProfileIcon(modifier: Modifier = Modifier) {
+fun ProfileIcon(context: Context, modifier: Modifier = Modifier) {
+
+    // Probably put this functionality in the API handler
+    val profileSharedPreferences = context.getSharedPreferences("ProfileData", Context.MODE_PRIVATE)
+    val imageURL = profileSharedPreferences.getString("profile_picture", "")
+    val baseURL = "http://54.202.77.126:8080"
+    val fullImageURL = baseURL + imageURL
+
     Surface(
         modifier = modifier
             .size(120.dp)
@@ -152,12 +158,12 @@ fun ProfileIcon(modifier: Modifier = Modifier) {
             .shadow(4.dp, CircleShape),
         color = Color.White
     ) {
+
         Image(
-            painter = painterResource(id = R.drawable.profile_icon), // Your drawable resource
+            painter = rememberImagePainter(fullImageURL),  // Using Coil to load an image from a URL
             contentDescription = "Profile Picture",
-            modifier = Modifier
-                .size(100.dp)
-                .clip(CircleShape)
+            modifier = Modifier.size(100.dp),
+            contentScale = ContentScale.Crop
         )
     }
 }

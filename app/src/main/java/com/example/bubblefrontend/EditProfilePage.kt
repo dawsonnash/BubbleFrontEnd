@@ -1,11 +1,13 @@
 package com.example.bubblefrontend
 
-import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
@@ -42,6 +44,16 @@ fun EditProfileScreen() {
     val context = LocalContext.current
     var newBio by remember { mutableStateOf("") }
     var newName by remember { mutableStateOf("") }
+    var imageURI by remember { mutableStateOf<Uri?>(null) }  // <-- add this line
+
+    // Launcher to handle the result from the image picker - like whatever image you choose
+    val launcher = rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri: Uri? ->
+        // Handle the returned URI (i.e. store it to the state)
+        if (uri != null) {
+            imageURI = uri  // <-- store the URI
+            Toast.makeText(context, "Selected image URI: $uri", Toast.LENGTH_LONG).show()
+        }
+    }
 
 
     Column(
@@ -65,6 +77,12 @@ fun EditProfileScreen() {
                 }
             )
             Text(text = "Edit Profile", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+        }
+
+        Button(onClick = {
+            launcher.launch("image/*")
+        }) {
+            Text("Upload Profile Picture")
         }
 
         OutlinedTextField(
@@ -94,7 +112,7 @@ fun EditProfileScreen() {
 
                     // Send the bio update request
                     val apiHandler = ApiHandler()
-                    apiHandler.handleEditProfile(newBio, newName, context)
+                    apiHandler.handleEditProfile(newBio, newName,imageURI, context)
 
                 }
             ),

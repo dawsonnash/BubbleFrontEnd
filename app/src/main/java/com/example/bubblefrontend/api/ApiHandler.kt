@@ -1,12 +1,19 @@
 package com.example.bubblefrontend.api
 
 import android.content.Context
-import android.util.Log
-import android.content.SharedPreferences
 import android.content.Intent
+import android.content.SharedPreferences
+import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import com.example.bubblefrontend.GlobalPage
 import com.example.bubblefrontend.LoginPage
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -229,65 +236,96 @@ class ApiHandler {
             })
         }
 
-    fun handleEditProfile(newBio: String, newName: String, context: Context) {
-        val retrofit = Retrofit.Builder()
-            .baseUrl("http://54.202.77.126:8080")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
+        fun handleEditProfile(newBio: String, newName: String, imageUri: Uri?, context: Context) {
 
-        val apiService = retrofit.create(ApiMethods::class.java)
+            // For logging. It's different because the Request is sent with parts
+            val logging = HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }
 
-        val accountSharedPreferences = context.getSharedPreferences("AccountDetails", Context.MODE_PRIVATE)
-        val profileSharedPreferences = context.getSharedPreferences("ProfileData", Context.MODE_PRIVATE)
+            val client = OkHttpClient.Builder()
+                .addInterceptor(logging)
+                .build()
 
-        val token = accountSharedPreferences.getString("token", "") ?: ""
-        val storedUsername = accountSharedPreferences.getString("username", "") ?: ""
-        val oldName = profileSharedPreferences.getString("name", "") ?: ""
+            val retrofit = Retrofit.Builder()
+                .baseUrl("http://54.202.77.126:8080")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
 
-        // Was error - "Account doesn't exist" so tryna log it out
-        Log.d("Debug", "Stored Username: $storedUsername, Token: $token, Name: $newName, Bio: $newBio")
+            val apiService = retrofit.create(ApiMethods::class.java)
 
-        // Check to see if user did not enter name in field. Should probably separate, and do same fo bio
-        val editProfileRequest: EditProfileRequest = if (newName == "") {
-            EditProfileRequest(newBio, oldName)
-        } else {
-            EditProfileRequest(newBio, newName)
-        }
+            val accountSharedPreferences = context.getSharedPreferences("AccountDetails", Context.MODE_PRIVATE)
+            val profileSharedPreferences = context.getSharedPreferences("ProfileData", Context.MODE_PRIVATE)
 
-        val call = storedUsername.let { apiService.editProfile("Bearer $token", it, editProfileRequest) }
+            val token = accountSharedPreferences.getString("token", "") ?: ""
+            val storedUsername = accountSharedPreferences.getString("username", "") ?: ""
+            val oldName = profileSharedPreferences.getString("name", "") ?: ""
+            val oldBio = profileSharedPreferences.getString("bio", "") ?: ""
 
-        call.enqueue(object : Callback<EditProfileResponse> {
-            override fun onResponse(
-                call: Call<EditProfileResponse>,
-                response: Response<EditProfileResponse>
-            ) {
-                if (response.isSuccessful) {
-                    val editProfileResponse = response.body()
-                    val message = editProfileResponse?.message
 
-                    if (!message.isNullOrEmpty()) {
-                        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-                    }
-                } else {
-                    val errorBody = response.errorBody()?.string()
-                    Log.d("Debug", "Error Body: $errorBody")
+            // Was error - "Account doesn't exist" so tryna log it out
+            Log.d("Debug", "Stored Username: $storedUsername, Token: $token, Name: $newName, Bio: $newBio")
 
-                    when (response.code()) {
-                        400 -> Toast.makeText(context, "Unable to update bio", Toast.LENGTH_LONG).show()
-                        404 -> Toast.makeText(context, "Account does not exist", Toast.LENGTH_LONG).show()
-                        500 -> Toast.makeText(context, "Internal server error", Toast.LENGTH_LONG).show()
-                        else -> Toast.makeText(context, "Unknown error", Toast.LENGTH_LONG).show()
-                    }
+            // Check to see if user did not enter name in field
+            val newBioPart = newBio.ifBlank { oldBio }.toRequestBody(MultipartBody.FORM)
+            val newNamePart = newName.ifBlank { oldName }.toRequestBody(MultipartBody.FORM)
 
-                    Log.d("Debug", "HTTP Status Code: ${response.code()}")
+            // All for uploading the picture. It takes the URI and converts it to a bytearray to be sent
+            val imagePart: MultipartBody.Part? = imageUri?.let { uri ->
+                val byteArray = context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                    inputStream.readBytes()
+                }
+
+                byteArray?.let {
+                    val requestFile = RequestBody.create("image/jpeg".toMediaTypeOrNull(), it)
+                    MultipartBody.Part.createFormData("image", "user_image.jpg", requestFile)
                 }
             }
 
-            override fun onFailure(call: Call<EditProfileResponse>, t: Throwable) {
-                Log.d("Debug", "Network error details: ${t.localizedMessage}")
-                Toast.makeText(context, "Network error, bruh", Toast.LENGTH_LONG).show()
+
+            // This is exactly what is being seent
+            Log.d("Debug", "Sending request with: Token: $token, Username: $storedUsername, New Bio: $newBio, New Name: $newName")
+
+            val call = storedUsername.let {
+                apiService.editProfile(
+                    "Bearer $token",
+                    it,
+                    newBioPart,
+                    newNamePart,
+                    imagePart
+                )
+            }.also {
+                it.enqueue(object : Callback<EditProfileResponse> {
+                    override fun onResponse(
+                        call: Call<EditProfileResponse>,
+                        response: Response<EditProfileResponse>
+                    ) {
+                        if (response.isSuccessful) {
+                            val editProfileResponse = response.body()
+                            val message = editProfileResponse?.message
+
+                            if (!message.isNullOrEmpty()) {
+                                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                            }
+                        } else {
+                            val errorBody = response.errorBody()?.string()
+                            Log.d("Debug", "Error Body: $errorBody")
+
+                            when (response.code()) {
+                                400 -> Toast.makeText(context, "Unable to update bio", Toast.LENGTH_LONG).show()
+                                404 -> Toast.makeText(context, "Account does not exist", Toast.LENGTH_LONG).show()
+                                500 -> Toast.makeText(context, "Internal server error", Toast.LENGTH_LONG).show()
+                                else -> Toast.makeText(context, "Unknown error", Toast.LENGTH_LONG).show()
+                            }
+
+                            Log.d("Debug", "HTTP Status Code: ${response.code()}")
+                        }
+                    }
+
+                    override fun onFailure(call: Call<EditProfileResponse>, t: Throwable) {
+                        Log.d("Debug", "Network error details: ${t.localizedMessage}")
+                        Toast.makeText(context, "Network error, bruh", Toast.LENGTH_LONG).show()
+                    }
+                })
             }
-        })
-    }
+        }
 
 }

@@ -3,8 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
-    <!-- Make sure to remove ClearTextTraffic - allows HTTP traffic-->
+    <!-- Make sure to remove ClearTextTraffic unless we get https - allows HTTP traffic-->
     <!-- Application label should be different than welcome page -->
 
     <application

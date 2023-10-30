@@ -31,12 +31,6 @@ data class ProfileResponse(
     val editable: Boolean
 )
 
-data class EditProfileRequest(
-    val newBio: String,
-    val newName: String
-    // val newPicture
-)
-
 data class EditProfileResponse(
     val message: String,
     val error: String?
