@@ -2,6 +2,7 @@ package com.example.bubblefrontend
 
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,8 +16,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
@@ -39,6 +42,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.constraintlayout.widget.ConstraintLayout
 import coil.annotation.ExperimentalCoilApi
 import coil.compose.rememberImagePainter
 import com.example.bubblefrontend.api.ApiHandler
@@ -60,7 +64,8 @@ class ProfilePage : ComponentActivity() {
 fun ProfileScreen() {
     val context = LocalContext.current
     val profileData = remember { mutableStateOf<ProfileResponse?>(null) }
-    val errorMessage = remember { mutableStateOf<String?>(null) } // Added to store the error message
+    val errorMessage =
+        remember { mutableStateOf<String?>(null) } // Added to store the error message
 
     LaunchedEffect(Unit) {
         val apiHandler = ApiHandler()
@@ -91,15 +96,25 @@ fun ProfileScreen() {
                 verticalArrangement = Arrangement.Top
 
             ) {
-                // Top Bar for Settings Icon, Profile Picture, and one day.. Friends Count
+                // Top Bar
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
 
-                    ProfileIcon(context, Modifier.padding(start = 16.dp, top = 16.dp))
+                    Spacer(modifier = Modifier.weight(1f))
+                    Text(
+                        text = username ?: "",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
                     SettingsIcon()
                 }
+
+                ProfileImageFollowersFollowing(context, profileSharedPreferences)
+
+
                 Text(
                     text = "${profile.name}",
                     fontWeight = FontWeight.Bold,
@@ -122,8 +137,9 @@ fun ProfileScreen() {
                 Spacer(
                     modifier = Modifier.weight(1f)
                 )
-                Box(modifier = Modifier
-                    .padding(16.dp)
+                Box(
+                    modifier = Modifier
+                        .padding(16.dp)
                 ) {
                     BottomDashboard()
                 }
@@ -139,6 +155,40 @@ fun ProfileScreen() {
     }
 }
 
+@Composable
+fun ProfileImageFollowersFollowing(context: Context, profileSharedPreferences: SharedPreferences) {
+
+    val followers = profileSharedPreferences.getInt("followers", -1)
+    val following = profileSharedPreferences.getInt("following", -1)
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+
+    ) {
+        ProfileIcon(context, Modifier.padding(start = 16.dp, top = 16.dp))
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = "$followers", fontWeight = FontWeight.Bold, fontSize = 20.sp) // Dynamic value for actual count
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(text = "Followers", fontSize = 20.sp,)
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = "$following", fontWeight = FontWeight.Bold, fontSize = 20.sp) // Dynamic value for actual count
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(text = "Following", fontSize = 20.sp)
+        }
+        Spacer(modifier = Modifier.weight(1f))
+    }
+}
 @OptIn(ExperimentalCoilApi::class)
 @Composable
 fun ProfileIcon(context: Context, modifier: Modifier = Modifier) {
@@ -197,7 +247,6 @@ fun SettingsIcon() {
         imageVector = Icons.Default.Settings,
         contentDescription = "Settings",
         modifier = Modifier
-            .padding(16.dp)
             .size(24.dp)
             .clickable {
                 val intent = Intent(context, SettingsPage::class.java)
