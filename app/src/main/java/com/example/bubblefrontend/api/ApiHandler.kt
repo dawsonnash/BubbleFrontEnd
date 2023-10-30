@@ -10,10 +10,7 @@ import com.example.bubblefrontend.GlobalPage
 import com.example.bubblefrontend.LoginPage
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
-import okhttp3.OkHttpClient
-import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -238,13 +235,6 @@ class ApiHandler {
 
         fun handleEditProfile(newBio: String, newName: String, imageUri: Uri?, context: Context) {
 
-            // For logging. It's different because the Request is sent with parts
-            val logging = HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }
-
-            val client = OkHttpClient.Builder()
-                .addInterceptor(logging)
-                .build()
-
             val retrofit = Retrofit.Builder()
                 .baseUrl("http://54.202.77.126:8080")
                 .addConverterFactory(GsonConverterFactory.create())
@@ -275,7 +265,8 @@ class ApiHandler {
                 }
 
                 byteArray?.let {
-                    val requestFile = RequestBody.create("image/jpeg".toMediaTypeOrNull(), it)
+                    val mediaType = "image/jpeg".toMediaTypeOrNull()
+                    val requestFile = it.toRequestBody(mediaType)
                     MultipartBody.Part.createFormData("image", "user_image.jpg", requestFile)
                 }
             }
@@ -284,7 +275,7 @@ class ApiHandler {
             // This is exactly what is being seent
             Log.d("Debug", "Sending request with: Token: $token, Username: $storedUsername, New Bio: $newBio, New Name: $newName")
 
-            val call = storedUsername.let {
+            storedUsername.let {
                 apiService.editProfile(
                     "Bearer $token",
                     it,
