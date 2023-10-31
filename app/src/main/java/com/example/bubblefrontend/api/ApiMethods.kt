@@ -12,6 +12,7 @@ import retrofit2.http.Path
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.http.Multipart
+import retrofit2.http.Query
 
 interface ApiMethods {
     @POST("api/login")
@@ -41,6 +42,13 @@ interface ApiMethods {
         @Part("newName") newName: RequestBody,
         @Part image: MultipartBody.Part?
     ): Call<EditProfileResponse>
+
+    @GET("/api/search")
+    @Headers("Accept: application/json")
+    fun getAllUsers(
+        // Next line is for if we want to implement searching a specific searchTerm
+       // @Query("searchTerm") searchTerm: String
+    ): Call<List<NonUser>>
 
 
 }

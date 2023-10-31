@@ -79,6 +79,9 @@ dependencies {
     implementation ("com.squareup.okhttp3:okhttp:4.9.3") // For image uploading
     implementation ("com.squareup.okhttp3:logging-interceptor:4.9.3") //For logging
     implementation ("io.coil-kt:coil-compose:1.3.2") // For image URL viewing
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2") // For the UserView model needed for searching through all users
+    implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
+
 
 
 
