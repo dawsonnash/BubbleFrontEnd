@@ -1,14 +1,10 @@
 package com.example.bubblefrontend
 
-import android.content.Context
-import android.content.Intent
-import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,71 +17,40 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.constraintlayout.widget.ConstraintLayout
 import coil.annotation.ExperimentalCoilApi
 import coil.compose.rememberImagePainter
-import com.example.bubblefrontend.api.ApiHandler
-import com.example.bubblefrontend.api.ProfileResponse
+import com.example.bubblefrontend.api.NonUser
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
+import com.google.gson.Gson
 
-class ProfilePage : ComponentActivity() {
+class NonUserPage : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val userJson: String? = intent.getStringExtra("NON_USER_JSON")
+        val user: NonUser? = Gson().fromJson(userJson, NonUser::class.java)
         setContent {
             BubbleFrontEndTheme {
-                ProfileScreen()
+                NonUserScreen(user)
             }
         }
     }
 }
 
 @Composable
-fun ProfileScreen() {
-    val context = LocalContext.current
-    val profileData = remember { mutableStateOf<ProfileResponse?>(null) }
-    val errorMessage =
-        remember { mutableStateOf<String?>(null) } // Added to store the error message
+fun NonUserScreen(user: NonUser?) {
 
-    LaunchedEffect(Unit) {
-        val apiHandler = ApiHandler()
-        apiHandler.handleProfile(context,
-            onSuccess = { profile ->
-                profileData.value = profile
-            },
-            onError = { error ->
-                errorMessage.value = error // Store the error message
-            }
-        )
-    }
-    // Read profile data from SharedPreferences
-    val profileSharedPreferences = context.getSharedPreferences("ProfileData", Context.MODE_PRIVATE)
-    val name = profileSharedPreferences.getString("name", "")
-    val username = profileSharedPreferences.getString("username", "")
-
-    if (profileData.value != null) {
-        // UI to display profile
-        val profile = profileData.value!!
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
@@ -104,19 +69,19 @@ fun ProfileScreen() {
 
                     Spacer(modifier = Modifier.weight(1f))
                     Text(
-                        text = username ?: "",
+                        text = user?.username?: "Unknown",
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp
                     )
                     Spacer(modifier = Modifier.weight(1f))
-                    SettingsIcon()
                 }
 
-                ProfileImageFollowersFollowing(context, profileSharedPreferences)
+                // Read profile data from SharedPreferences
+                NonUserProfileImageFollowersFollowing(imageURL = user?.profile_picture ?: "" )
 
 
                 Text(
-                    text = "${profile.name}",
+                    text = user?.name ?: "Unknown",
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
                     modifier = Modifier.padding(start = 16.dp, top = 8.dp)
@@ -125,13 +90,12 @@ fun ProfileScreen() {
                 // Bio
                 Row(modifier = Modifier.padding(end = 16.dp)) {
                     Text(
-                        text = "${profile.bio}",
+                        text = "some bio here... nothing from server",
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
                         modifier = Modifier.padding(start = 16.dp, top = 8.dp)
                     )
                     Spacer(modifier = Modifier.weight(1f))
-                    EditProfileButton(context)
                 }
 
                 Spacer(
@@ -146,20 +110,10 @@ fun ProfileScreen() {
             }
         }
 
-    } else if (errorMessage.value != null) {
-        // Display the error message
-        Text(text = "Error: ${errorMessage.value}")
-    } else {
-        // Loading state
-        Text("Loading...")
     }
-}
 
 @Composable
-fun ProfileImageFollowersFollowing(context: Context, profileSharedPreferences: SharedPreferences) {
-
-    val followers = profileSharedPreferences.getInt("followers", -1)
-    val following = profileSharedPreferences.getInt("following", -1)
+fun NonUserProfileImageFollowersFollowing(imageURL: String) {
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -167,35 +121,34 @@ fun ProfileImageFollowersFollowing(context: Context, profileSharedPreferences: S
         verticalAlignment = Alignment.CenterVertically
 
     ) {
-        ProfileIcon(context, Modifier.padding(start = 16.dp, top = 16.dp))
+        NonUserProfileIcon(imageURL, Modifier.padding(start = 16.dp, top = 16.dp))
 
         Spacer(modifier = Modifier.weight(1f))
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = "$followers", fontWeight = FontWeight.Bold, fontSize = 20.sp) // Dynamic value for actual count
+            Text(text = "0", fontWeight = FontWeight.Bold, fontSize = 20.sp) // Dynamic value for actual count
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = "Followers", fontSize = 20.sp,)
+            Text(text = "Followers", fontSize = 20.sp)
         }
         Spacer(modifier = Modifier.width(12.dp))
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = "$following", fontWeight = FontWeight.Bold, fontSize = 20.sp) // Dynamic value for actual count
+            Text(text = "0", fontWeight = FontWeight.Bold, fontSize = 20.sp) // Dynamic value for actual count
             Spacer(modifier = Modifier.height(4.dp))
             Text(text = "Following", fontSize = 20.sp)
         }
         Spacer(modifier = Modifier.weight(1f))
     }
 }
+
 @OptIn(ExperimentalCoilApi::class)
 @Composable
-fun ProfileIcon(context: Context, modifier: Modifier = Modifier) {
+fun NonUserProfileIcon(imageURL: String, modifier: Modifier = Modifier) {
 
     // Probably put this functionality in the API handler
-    val profileSharedPreferences = context.getSharedPreferences("ProfileData", Context.MODE_PRIVATE)
-    val imageURL = profileSharedPreferences.getString("profile_picture", "")
     val baseURL = "http://54.202.77.126:8080"
     val fullImageURL = baseURL + imageURL
 
@@ -216,41 +169,4 @@ fun ProfileIcon(context: Context, modifier: Modifier = Modifier) {
             contentScale = ContentScale.Crop
         )
     }
-}
-@Composable
-fun EditProfileButton(context: Context){
-    Button(
-        onClick = {
-            val intent = Intent(context, EditProfilePage::class.java)
-            context.startActivity(intent)
-
-        },
-    // Make button transparent
-    ){
-        Image(
-            painter = painterResource(id = R.drawable.baseline_edit_24),
-            contentDescription = "Profile Picture",
-        )
-        Text(
-            text = "Edit Profile",
-            fontSize = 10.sp
-        )
-    }
-}
-
-
-
-@Composable
-fun SettingsIcon() {
-    val context = LocalContext.current
-    Icon(
-        imageVector = Icons.Default.Settings,
-        contentDescription = "Settings",
-        modifier = Modifier
-            .size(24.dp)
-            .clickable {
-                val intent = Intent(context, SettingsPage::class.java)
-                context.startActivity(intent)
-            }
-    )
 }
