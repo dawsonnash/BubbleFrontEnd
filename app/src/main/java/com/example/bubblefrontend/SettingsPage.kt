@@ -80,22 +80,4 @@ fun SettingsScreen() {
 
     }
 }
-@Composable
-fun LogoutButton(context: Context, accountSharedPreferences: SharedPreferences){
-    val editor = accountSharedPreferences.edit()
-    Button(
-        onClick = {
-            // Set isLoggedIn to false
-            editor.putBoolean("isLoggedIn", false)
-            editor.apply()
-
-            val intent = Intent(context, WelcomePage::class.java)
-            context.startActivity(intent)
-        }
-    ) {
-        Text("Logout")
-
-
-    }
-}
 

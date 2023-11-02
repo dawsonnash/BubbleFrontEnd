@@ -6,8 +6,10 @@ import android.content.SharedPreferences
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.material3.Button
 import com.example.bubblefrontend.GlobalPage
 import com.example.bubblefrontend.LoginPage
+import com.example.bubblefrontend.WelcomePage
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -224,11 +226,17 @@ class ApiHandler {
                             else -> "Unknown error occurred"
                         }
                         onError(errorMessage)
+
+                        // If user account not found, automatically logout
+                        if (response.code() == 404)
+                        {
+                            forceLogout(context, accountSharedPreferences)
+                        }
                     }
                 }
 
                 override fun onFailure(call: Call<ProfileResponse>, t: Throwable) {
-                    onError("Network error, bro!")
+                    onError("Network error, bro! ${t.message}")
                 }
             })
         }
@@ -318,5 +326,15 @@ class ApiHandler {
                 })
             }
         }
+
+    fun forceLogout(context: Context, accountSharedPreferences: SharedPreferences){
+        val editor = accountSharedPreferences.edit()
+
+        editor.putBoolean("isLoggedIn", false)
+        editor.apply()
+
+        val intent = Intent(context, WelcomePage::class.java)
+        context.startActivity(intent)
+    }
 
 }

@@ -124,6 +124,7 @@ fun EditProfileScreen() {
     }
 }
 
+
 @Preview(showBackground = true)
 @Composable
 fun EditProfileScreenPreview() {

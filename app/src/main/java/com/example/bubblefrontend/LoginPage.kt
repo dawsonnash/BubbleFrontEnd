@@ -31,7 +31,7 @@ class LoginPage : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Login()
+                    LoginScreen()
                 }
             }
         }
@@ -41,7 +41,7 @@ class LoginPage : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Login() {
+fun LoginScreen() {
     val context = LocalContext.current              // For transitioning to other activities
     // For storing user info on registration
     // Could delete handleLogin parameters and store SharedPreferences directly in the function
@@ -104,7 +104,7 @@ fun Login() {
 @Composable
 fun LoginPreview() {
     BubbleFrontEndTheme {
-        Login()
+        LoginScreen()
     }
 }
 
