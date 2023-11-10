@@ -48,7 +48,12 @@ fun LoginScreen() {
     val sharedPreferences: SharedPreferences = context.getSharedPreferences("AccountDetails", Context.MODE_PRIVATE)
     val editor: SharedPreferences.Editor = sharedPreferences.edit()
 
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ){
 
+        RisingBubbleAnimation()
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -95,7 +100,7 @@ fun LoginScreen() {
         ) {
             Text("Login")
         }
-
+    }
     }
 }
 
