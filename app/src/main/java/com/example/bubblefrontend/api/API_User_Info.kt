@@ -1,5 +1,4 @@
 package com.example.bubblefrontend.api
-
 data class LoginRequest(
     val username: String,
     val password: String)
@@ -34,4 +33,16 @@ data class ProfileResponse(
 data class EditProfileResponse(
     val message: String,
     val error: String?
+)
+
+// For user search
+data class NonUser(
+    val username: String,
+    val uid: Int,
+    val name: String,
+    val profile_picture: String,
+    val url: String,
+    val html_url: String,
+    val followers_url: String,
+    val following_url: String
 )
