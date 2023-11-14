@@ -1,7 +1,7 @@
 package com.example.bubblefrontend
 
-import android.content.Intent
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
@@ -61,7 +60,6 @@ class UserSearchPage : ComponentActivity() {
 @Composable
 fun UserSearchScreen(userViewModel: UserViewModel){
     val userList = remember { mutableStateOf(listOf<NonUser>()) }
-
     LaunchedEffect(key1 = userViewModel) {
         userViewModel.userList.observeForever { newList ->
             userList.value = newList
@@ -79,6 +77,7 @@ fun UserSearchScreen(userViewModel: UserViewModel){
         BottomDashboard()
     }
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchBar(userList: List<NonUser>) {
@@ -122,7 +121,8 @@ fun SearchBar(userList: List<NonUser>) {
                                 val intent = Intent(context, NonUserPage::class.java).apply {
                                     putExtra("NON_USER_JSON", userJson)
                                 }
-                                context.startActivity(intent)                       }
+                                context.startActivity(intent)
+                            }
                     )
                     Divider()
                 }
