@@ -1,39 +1,45 @@
 package com.example.bubblefrontend
 
-import kotlin.math.sqrt
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
+import kotlin.math.sqrt
 
 class GlobalPage : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -75,7 +81,9 @@ fun FullScreenPostView(post: Post, onBack: () -> Unit) {
                 fontSize = 20.sp,
                 color = Color.Black,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().padding(16.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
             )
 
             // Only display the image if there is a picture URL
@@ -118,54 +126,70 @@ fun GlobalScreen() {
         val initialOffsetY = -maxVerticalScrollPx / 2
         var offsetX by remember { mutableStateOf(initialOffsetX) }
         var offsetY by remember { mutableStateOf(initialOffsetY) }
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .pointerInput(Unit) {
-                    detectTransformGestures { _, pan, _, _ ->
-                        val newOffsetX = (offsetX + pan.x).coerceIn(-maxHorizontalScrollPx, 0f)
-                        val newOffsetY = (offsetY + pan.y).coerceIn(-maxVerticalScrollPx, 0f)
-                        offsetX = newOffsetX
-                        offsetY = newOffsetY
-                    }
-                }
-                .graphicsLayer(
-                    translationX = offsetX,
-                    translationY = offsetY
-                )
-        ) {
-            posts.forEachIndexed { index, post ->
-                val col = index % columns
-                val row = index / columns
-                val xOffset = if (row % 2 == 0) col * horizontalDistancePx else col * horizontalDistancePx + horizontalDistancePx / 2
-                val yOffset = row * verticalDistancePx * 3 / 4
-
-                Box(
-                    modifier = Modifier
-                        .offset(x = with(density) { xOffset.toDp() }, y = with(density) { yOffset.toDp() })
-                        .size(400.dp)
-                        .background(
-                            brush = Brush.radialGradient(
-                                colors = listOf(Color.Magenta, Color.Cyan, Color.Yellow, Color.Magenta),
-                                center = Offset.Zero,
-                                radius = bubbleRadiusPx
-                            ),
-                            shape = CircleShape
-                        )
-                        .padding(16.dp)
-                        .clickable {
-                            selectedPost = post // Update the state to the clicked post
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = post.text ?: "",
-                        fontSize = 16.sp,
-                        color = Color.White
-                    )
+Column() {
+    Box(
+        modifier = Modifier
+            .pointerInput(Unit) {
+                detectTransformGestures { _, pan, _, _ ->
+                    val newOffsetX = (offsetX + pan.x).coerceIn(-maxHorizontalScrollPx, 0f)
+                    val newOffsetY = (offsetY + pan.y).coerceIn(-maxVerticalScrollPx, 0f)
+                    offsetX = newOffsetX
+                    offsetY = newOffsetY
                 }
             }
+            .graphicsLayer(
+                translationX = offsetX,
+                translationY = offsetY
+            )
+    ) {
+        posts.forEachIndexed { index, post ->
+            val col = index % columns
+            val row = index / columns
+            val xOffset =
+                if (row % 2 == 0) col * horizontalDistancePx else col * horizontalDistancePx + horizontalDistancePx / 2
+            val yOffset = row * verticalDistancePx * 3 / 4
+
+            Box(
+                modifier = Modifier
+                    .offset(
+                        x = with(density) { xOffset.toDp() },
+                        y = with(density) { yOffset.toDp() })
+                    .size(400.dp)
+                    .background(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                Color.Magenta,
+                                Color.Cyan,
+                                Color.Yellow,
+                                Color.Magenta
+                            ),
+                            center = Offset.Zero,
+                            radius = bubbleRadiusPx
+                        ),
+                        shape = CircleShape
+                    )
+                    .padding(16.dp)
+                    .clickable {
+                        selectedPost = post // Update the state to the clicked post
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = post.text ?: "",
+                    fontSize = 16.sp,
+                    color = Color.White
+                )
+            }
         }
+    }
+    Spacer(
+        modifier = Modifier.weight(1f)
+    )
+    Box(
+
+    ) {
+        BottomDashboard()
+    }
+}
     }
 }
