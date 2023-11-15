@@ -76,8 +76,8 @@ fun WelcomeScreen() {
         Image(
             painter = painterResource(id = R.drawable.bubblewelcomepage),
             contentDescription = "Background",
-            modifier = Modifier.matchParentSize(), // This will make the image match the size of the Box
-            contentScale = ContentScale.Crop // This will crop the image if necessary to fill the Box
+            modifier = Modifier.matchParentSize(),
+            contentScale = ContentScale.Crop
         )
         //RisingBubbleAnimation()
         Row(

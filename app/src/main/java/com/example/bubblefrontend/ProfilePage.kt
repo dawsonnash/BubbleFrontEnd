@@ -34,15 +34,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.constraintlayout.widget.ConstraintLayout
 import coil.annotation.ExperimentalCoilApi
 import coil.compose.rememberImagePainter
 import com.example.bubblefrontend.api.ApiHandler
@@ -86,6 +85,26 @@ fun ProfileScreen() {
     if (profileData.value != null) {
         // UI to display profile
         val profile = profileData.value!!
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.DarkGray),
+            contentAlignment = Alignment.Center
+
+        ) {}
+        // The following sets the background to a specific image
+        /*{
+            // Set the image as the background
+            Image(
+                painter = painterResource(id = R.drawable.bubblebackground01),
+                contentDescription = "Background",
+                modifier = Modifier.matchParentSize(),
+                contentScale = ContentScale.Crop
+            )
+        }
+         */
+
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
@@ -105,8 +124,17 @@ fun ProfileScreen() {
                     Spacer(modifier = Modifier.weight(1f))
                     Text(
                         text = username ?: "",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp
+                        style = TextStyle(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                            color = Color.White
+                        ),
+                        modifier = Modifier
+//                           .background(
+//                               color = Color.White.copy(alpha = 0.9f), // Semi-transparent white
+//                               shape = RoundedCornerShape(4.dp) // Rounded corners
+//                           )
+
                     )
                     Spacer(modifier = Modifier.weight(1f))
                     SettingsIcon()
@@ -117,29 +145,42 @@ fun ProfileScreen() {
 
                 Text(
                     text = "${profile.name}",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    modifier = Modifier.padding(start = 16.dp, top = 8.dp)
+                    style = TextStyle(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        color = Color.White
+                    ),
+                    modifier = Modifier
+                        .padding(start = 16.dp, top = 8.dp)
+//                        .background(
+//                            color = Color.White.copy(alpha = 0.9f), // Semi-transparent white
+//                            shape = RoundedCornerShape(4.dp) // Rounded corners
+//
+//                        )
                 )
 
                 // Bio
-                Row(modifier = Modifier.padding(end = 16.dp)) {
-                    Text(
-                        text = "${profile.bio}",
+                Text(
+                    text = "${profile.bio}",
+                    style = TextStyle(
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
-                        modifier = Modifier.padding(start = 16.dp, top = 8.dp)
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
-                    EditProfileButton(context)
-                }
+                        color = Color.White
+                    ),
+                    modifier = Modifier
+                        .padding(start = 16.dp, top = 8.dp)
+//                            .background(
+//                                color = Color.White.copy(alpha = 0.9f), // Semi-transparent white
+//                                shape = RoundedCornerShape(4.dp) // Rounded corners
+//                            )
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                EditProfileButton(context)
 
                 Spacer(
                     modifier = Modifier.weight(1f)
                 )
                 Box(
-                    modifier = Modifier
-                        .padding(16.dp)
                 ) {
                     BottomDashboard()
                 }
@@ -155,6 +196,7 @@ fun ProfileScreen() {
     }
 }
 
+
 @Composable
 fun ProfileImageFollowersFollowing(context: Context, profileSharedPreferences: SharedPreferences) {
 
@@ -167,24 +209,58 @@ fun ProfileImageFollowersFollowing(context: Context, profileSharedPreferences: S
         verticalAlignment = Alignment.CenterVertically
 
     ) {
-        ProfileIcon(context, Modifier.padding(start = 16.dp, top = 16.dp))
+        ProfileIcon(context, Modifier
+            .padding(start = 16.dp, top = 16.dp)
+            )
 
         Spacer(modifier = Modifier.weight(1f))
 
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+//                .background(
+//                    color = Color.White.copy(alpha = 0.9f), // Semi-transparent white
+//                     shape = RoundedCornerShape(4.dp))
         ) {
-            Text(text = "$followers", fontWeight = FontWeight.Bold, fontSize = 20.sp) // Dynamic value for actual count
+            Text(
+                text = "$followers",  // Dynamic value for actual count
+                style = TextStyle(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    color = Color.White)
+            )
+
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = "Followers", fontSize = 20.sp,)
+            Text(
+                text = "Followers",
+                style = TextStyle(
+                fontSize = 20.sp,
+                color = Color.White)
+            )
         }
         Spacer(modifier = Modifier.width(12.dp))
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+//            modifier = Modifier
+//                .background(
+//                    color = Color.White.copy(alpha = 0.9f), // Semi-transparent white
+//                    shape = RoundedCornerShape(4.dp) // Rounded corners
         ) {
-            Text(text = "$following", fontWeight = FontWeight.Bold, fontSize = 20.sp) // Dynamic value for actual count
+            Text(text = "$following", // Dynamic value for actual count
+                style = TextStyle(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    color = Color.White)
+            )
+
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = "Following", fontSize = 20.sp)
+            Text(
+                text = "Following",
+                style = TextStyle(
+                    fontSize = 20.sp,
+                    color = Color.White
+                ),
+                )
         }
         Spacer(modifier = Modifier.weight(1f))
     }
@@ -201,12 +277,20 @@ fun ProfileIcon(context: Context, modifier: Modifier = Modifier) {
 
     Surface(
         modifier = modifier
-            .size(120.dp)
+            .size(130.dp)
             .clip(CircleShape)
-            .background(Color.Gray)
+        // The following applies a background to the profile image
+            /*
+            .background(
+                color = Color.White.copy(alpha = 0.6f), // Semi-transparent white
+
+            )
             .padding(10.dp)
             .shadow(4.dp, CircleShape),
+
         color = Color.White
+        */
+
     ) {
 
         Image(
@@ -229,7 +313,7 @@ fun EditProfileButton(context: Context){
     ){
         Image(
             painter = painterResource(id = R.drawable.baseline_edit_24),
-            contentDescription = "Profile Picture",
+            contentDescription = "Edit Profile",
         )
         Text(
             text = "Edit Profile",
@@ -247,10 +331,16 @@ fun SettingsIcon() {
         imageVector = Icons.Default.Settings,
         contentDescription = "Settings",
         modifier = Modifier
-            .size(24.dp)
+            .size(30.dp)
+//            .background(
+//                color = Color.White.copy(alpha = 0.9f), // Semi-transparent white
+//                shape = RoundedCornerShape(4.dp) // Rounded corners
+//            )
             .clickable {
                 val intent = Intent(context, SettingsPage::class.java)
                 context.startActivity(intent)
-            }
+            },
+        tint = Color.White
     )
+
 }

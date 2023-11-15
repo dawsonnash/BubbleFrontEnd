@@ -6,8 +6,11 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
@@ -27,7 +31,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -65,11 +72,22 @@ fun UserSearchScreen(userViewModel: UserViewModel){
             userList.value = newList
         }
     }
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        // Set the image as the background
+        Image(
+            painter = painterResource(id = R.drawable.bubblebackground01),
+            contentDescription = "Background",
+            modifier = Modifier.matchParentSize(),
+            contentScale = ContentScale.Crop
+        )
+    }
 
     Column (
         modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
+            .fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ){
@@ -92,6 +110,7 @@ fun SearchBar(userList: List<NonUser>) {
     Column(
         modifier = Modifier
             .padding(16.dp)
+
     ) {
         // Search field
         OutlinedTextField(
@@ -100,6 +119,11 @@ fun SearchBar(userList: List<NonUser>) {
             label = { Text("Search Users") },
             modifier = Modifier
                 .fillMaxWidth()
+                .background(
+                    color = Color.White.copy(alpha = 0.9f), // Semi-transparent white
+                    shape = RoundedCornerShape(4.dp) // Rounded corners
+
+                )
         )
 
         // Display results
@@ -115,6 +139,11 @@ fun SearchBar(userList: List<NonUser>) {
                         style = TextStyle(fontSize = 20.sp),
                         modifier = Modifier
                             .fillMaxWidth()
+                            .background(
+                                color = Color.White.copy(alpha = 0.9f), // Semi-transparent white
+                                shape = RoundedCornerShape(4.dp) // Rounded corners
+
+                            )
                             .clickable {
                                 val gson = Gson()
                                 val userJson = gson.toJson(user)
@@ -122,6 +151,7 @@ fun SearchBar(userList: List<NonUser>) {
                                     putExtra("NON_USER_JSON", userJson)
                                 }
                                 context.startActivity(intent)
+
                             }
                     )
                     Divider()

@@ -46,3 +46,16 @@ data class NonUser(
     val followers_url: String,
     val following_url: String
 )
+
+// Apt to change
+data class FeedData(
+    val page: Int,
+    val pageSize: Int,
+    val startIndex: Int,
+    val endIndex: Int,
+    val integers: List<Int>,
+    val message: String
+)
+
+
+

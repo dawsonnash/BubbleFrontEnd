@@ -50,6 +50,12 @@ interface ApiMethods {
        // @Query("searchTerm") searchTerm: String
     ): Call<List<NonUser>>
 
+    @GET("/api/posts/feed")
+    fun getFeed(
+        @Header("Authorization") token: String,
+        @Query("p") page: Int,
+        @Query("ps") pageSize: Int
+    ): Call<FeedData>
 
 }
 

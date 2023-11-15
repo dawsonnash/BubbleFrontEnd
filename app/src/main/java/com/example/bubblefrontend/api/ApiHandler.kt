@@ -327,6 +327,7 @@ class ApiHandler {
             }
         }
 
+    // For when user login info cannot be retrieved
     fun forceLogout(context: Context, accountSharedPreferences: SharedPreferences){
         val editor = accountSharedPreferences.edit()
 
