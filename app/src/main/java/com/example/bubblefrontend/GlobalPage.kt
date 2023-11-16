@@ -13,8 +13,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,14 +25,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -47,6 +45,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -118,40 +117,88 @@ fun initializePosts(): List<Post> {
 }
 
 @Composable
-fun FullScreenPostView(post: Post, onBack: () -> Unit) {
+fun FullScreenPostView(post: FeedData, onBack: () -> Unit) {
+
+    val postImageURL = post.photo_url
+    val baseURL = "http://54.202.77.126:8080"
+    val fullPostImageURL = baseURL + postImageURL
+
+    val profileImageURL = post.profile_picture
+    val fullProfileImageURL = baseURL + profileImageURL
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White.copy(alpha = 0.2f))
+    ) {}
     Box(modifier = Modifier.fillMaxSize()) {
         Column {
             Button(onClick = onBack) {
                 Text("Back")
             }
 
-            Text(
-                text = post.text ?: "",
-                fontSize = 20.sp,
-                color = Color.Black,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().padding(16.dp)
-            )
-
-            // Display the actual image if there is a picture URL
-            post.pictureUrl?.let { imageUrl ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(8.dp)
+            ) {
+                // Profile picture
                 Image(
-                    painter = rememberImagePainter(imageUrl),
-                    contentDescription = "Post Image",
+                    painter = rememberImagePainter(
+                        data = fullProfileImageURL,
+                        builder = {
+                            crossfade(true)     // For a smooth image loading transition
+                        }
+                    ),
+                    contentDescription = "Profile Picture",
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1f) // Adjust aspect ratio as needed
+                        .size(40.dp) // Set size of profile image
+                        .clip(CircleShape)
+                        .background(Color.Gray), // Placeholder background
+                    contentScale = ContentScale.Crop
+
+                )
+
+                Spacer(Modifier.width(8.dp)) // Space between the image and the text
+
+                // Username text
+                Text(
+                    text = post.username ?: "",
+                    fontSize = 20.sp,
+                    modifier = Modifier.padding(start = 8.dp) // Add padding between text and profile picture
                 )
             }
+
+            Text(
+                text = post.caption ?: "",
+                fontSize = 20.sp,
+                color = Color.Black,
+                textAlign = TextAlign.Left,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            )
+
+
+            // Display the actual image if there is a picture URL
+            Image(
+                painter = rememberImagePainter(fullPostImageURL),
+                contentDescription = "Post Image",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f) // Adjust aspect ratio as needed
+            )
+            }
         }
-    }
 }
 
 @Composable
 fun GlobalScreen(postModel: PostModel, launchImagePicker: () -> Unit) {
     val posts = remember { mutableStateListOf(*initializePosts().toTypedArray()) }
-    var selectedPost by remember { mutableStateOf<Post?>(null) }
     var showNewPostDialog by remember { mutableStateOf(false) }
+
+    var showPostContent by remember { mutableStateOf(false) }
+    var selectedPostData by remember { mutableStateOf<FeedData?>(null) }
+
 
     // For API called posts
     var postList by remember { mutableStateOf(listOf<FeedData>()) }
@@ -190,9 +237,6 @@ fun GlobalScreen(postModel: PostModel, launchImagePicker: () -> Unit) {
                     .weight(1f)
                     .fillMaxWidth()
             ) {
-                if (selectedPost != null) {
-                    FullScreenPostView(post = selectedPost!!, onBack = { selectedPost = null })
-                } else {
                     // Render the grid of posts
                     val configuration = LocalConfiguration.current
                     val density = LocalDensity.current
@@ -201,11 +245,8 @@ fun GlobalScreen(postModel: PostModel, launchImagePicker: () -> Unit) {
                     val verticalDistancePx = bubbleRadiusPx * sqrt(3f) * 3 / 4
                     val horizontalDistancePx = bubbleRadiusPx * 2 * 0.75f
 
-                    // Need to calculate number of columns based on number of posts
-                    // For some reason only works with 5
-                    //val columns = 5
-
-                    val columns = ceil(sqrt(postList.size.toDouble())).toInt()
+                    val columns = 25
+                    //val columns = ceil(sqrt(postList.size.toDouble())).toInt()
                     val rows = ceil(postList.size.toDouble() / columns).toInt()
                     Log.d("GlobalScreen", "Number of columns: $columns")
 
@@ -217,8 +258,10 @@ fun GlobalScreen(postModel: PostModel, launchImagePicker: () -> Unit) {
                     val maxHorizontalScrollPx = max(0f, totalGridWidthPx - screenWidthPx)
                     val maxVerticalScrollPx = max(0f, totalGridHeightPx - screenHeightPx)
 
-                    val initialOffsetX = if (maxHorizontalScrollPx > 0) -maxHorizontalScrollPx / 2 else 0f
-                    val initialOffsetY = if (maxVerticalScrollPx > 0) -maxVerticalScrollPx / 2 else 0f
+                    val initialOffsetX =
+                        if (maxHorizontalScrollPx > 0) -maxHorizontalScrollPx / 2 else 0f
+                    val initialOffsetY =
+                        if (maxVerticalScrollPx > 0) -maxVerticalScrollPx / 2 else 0f
 
                     var offsetX by remember { mutableStateOf(initialOffsetX) }
                     var offsetY by remember { mutableStateOf(initialOffsetY) }
@@ -230,8 +273,10 @@ fun GlobalScreen(postModel: PostModel, launchImagePicker: () -> Unit) {
                             .pointerInput(Unit) {
                                 detectTransformGestures { _, pan, _, _ ->
                                     Log.d("GlobalScreen", "Pan detected: ${pan.x}, ${pan.y}")
-                                    val newOffsetX = (offsetX + pan.x).coerceIn(-maxHorizontalScrollPx, 0f)
-                                    val newOffsetY = (offsetY + pan.y).coerceIn(-maxVerticalScrollPx, 0f)
+                                    val newOffsetX =
+                                        (offsetX + pan.x).coerceIn(-maxHorizontalScrollPx, 0f)
+                                    val newOffsetY =
+                                        (offsetY + pan.y).coerceIn(-maxVerticalScrollPx, 0f)
                                     offsetX = newOffsetX
                                     offsetY = newOffsetY
                                 }
@@ -250,54 +295,67 @@ fun GlobalScreen(postModel: PostModel, launchImagePicker: () -> Unit) {
 
                             Bubble(
                                 post = postData,
+                                showPostContent = showPostContent,
                                 modifier = Modifier
                                     .offset(
                                         x = with(density) { xOffset.toDp() },
                                         y = with(density) { yOffset.toDp() }
                                     )
                                     .size(400.dp)
+                                    .clickable {
+                                        selectedPostData = postData
+                                        showPostContent = true // Show the full screen content
+                                    }
+
                             )
+                            if (showPostContent && selectedPostData != null) {
+                                FullScreenPostView(post = selectedPostData!!, onBack = {
+                                    showPostContent = false // Hide the full screen content
+                                })
+                            }
+
                         }
+
                     }
                 }
-            }
-
             BottomDashboard()
         }
 
-        // Floating action button
-        FloatingActionButton(
-            onClick = { showNewPostDialog = true },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(bottom = 70.dp, end = 16.dp)
-        ) {
-            Icon(imageVector = Icons.Filled.Add, contentDescription = "Add Post")
-        }
 
-        // Show dialog for new post creation
-        if (showNewPostDialog) {
-            CreatePostDialog(
-                onPostCreate = { newText, newImageUri ->
-                    posts.add(0, Post(text = newText, pictureUrl = newImageUri)) // Add new post at the top
-                    posts.removeLast() // Remove the oldest post
-                    GlobalPage.imageUri.value = null // Reset the image URI
-                    showNewPostDialog = false
-                },
-                onDismiss = {
-                    GlobalPage.imageUri.value = null // Reset the image URI
-                    showNewPostDialog = false
-                },
-                launchImagePicker = launchImagePicker
-            )
+    // Floating action button
+    FloatingActionButton(
+        onClick = { showNewPostDialog = true },
+        modifier = Modifier
+            .align(Alignment.BottomEnd)
+            .padding(bottom = 70.dp, end = 16.dp)
+    ) {
+        Icon(imageVector = Icons.Filled.Add, contentDescription = "Add Post")
+    }
 
-        }
+    // Show dialog for new post creation
+    if (showNewPostDialog) {
+        CreatePostDialog(
+            onPostCreate = { newText, newImageUri ->
+                posts.add(
+                    0,
+                    Post(text = newText, pictureUrl = newImageUri)
+                ) // Add new post at the top
+                posts.removeLast() // Remove the oldest post
+                GlobalPage.imageUri.value = null // Reset the image URI
+                showNewPostDialog = false
+            },
+            onDismiss = {
+                GlobalPage.imageUri.value = null // Reset the image URI
+                showNewPostDialog = false
+            },
+            launchImagePicker = launchImagePicker
+        )
+    }
     }
 }
 
 @Composable
-fun Bubble(post: FeedData, modifier: Modifier) {
-    // Define the Bubble UI with clickable behavior
+fun Bubble(post: FeedData, showPostContent: Boolean, modifier: Modifier) {
     Box(
         modifier = modifier
             .background(
@@ -309,20 +367,19 @@ fun Bubble(post: FeedData, modifier: Modifier) {
                         Color.Magenta
                     ),
                     center = Offset.Zero,
-                    //BubbleRadiusPx
-                    //radius = 4.3
                 ),
                 shape = CircleShape
             )
-            .clickable {
-                // Define what happens when a bubble is clicked
-            },
-        contentAlignment = Alignment.Center
     ) {
-        Column() {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
             Text(
                 text = post.username ?: "filler info",
-                fontSize = 20.sp,
+                fontSize = 30.sp,
                 color = Color.White
             )
             Text(
@@ -330,9 +387,11 @@ fun Bubble(post: FeedData, modifier: Modifier) {
                 fontSize = 16.sp,
                 color = Color.White
             )
+
         }
     }
 }
+
 
 @Composable
 fun CreatePostDialog(onPostCreate: (String, String?) -> Unit, onDismiss: () -> Unit, launchImagePicker: () -> Unit) {
