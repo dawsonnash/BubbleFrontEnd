@@ -47,17 +47,14 @@ interface ApiMethods {
     @Headers("Accept: application/json")
     fun getAllUsers(
         // Next line is for if we want to implement searching a specific searchTerm
-       // @Query("searchTerm") searchTerm: String
+        // @Query("searchTerm") searchTerm: String
     ): Call<List<NonUser>>
 
     @GET("/api/posts/feed")
     fun getFeed(
-        @Header("Authorization") token: String,
-        @Query("p") page: Int,
-        @Query("ps") pageSize: Int
-    ): Call<FeedData>
+        @Query("p") page: Int? = null, // Page number for pagination
+        @Query("ps") pageSize: Int? = null // Page size for pagination
+    ): Call<List<FeedData>>
 
 }
-
-
 

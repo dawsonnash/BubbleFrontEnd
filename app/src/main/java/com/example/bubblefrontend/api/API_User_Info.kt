@@ -49,12 +49,16 @@ data class NonUser(
 
 // Apt to change
 data class FeedData(
-    val page: Int,
-    val pageSize: Int,
-    val startIndex: Int,
-    val endIndex: Int,
-    val integers: List<Int>,
-    val message: String
+    val postID: Int,
+    val uid: Int,
+    val photo: String,
+    val photo_url: String,
+    val caption: String,
+    val username: String,
+    val name: String,
+    val profile_picture: String,
+    val url: String,
+    val html_url: String
 )
 
 

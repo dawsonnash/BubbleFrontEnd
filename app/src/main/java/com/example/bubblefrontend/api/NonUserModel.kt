@@ -9,7 +9,7 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-class UserViewModel : ViewModel() {
+class NonUserModel : ViewModel() {
 
     // Live list to store all users gathered for search query
     val userList = MutableLiveData<List<NonUser>>()
