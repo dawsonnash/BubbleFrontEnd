@@ -50,6 +50,13 @@ interface ApiMethods {
         // @Query("searchTerm") searchTerm: String
     ): Call<List<NonUser>>
 
+    @GET("/api/search")
+    @Headers("Accept: application/json")
+    fun getSingleUser(
+        @Query("searchTerm") searchTerm: String
+    ): Call<List<NonUser>>
+
+
     @GET("/api/posts/feed")
     @Headers("Accept: application/json")
     fun getFeed(

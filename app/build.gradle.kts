@@ -82,6 +82,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2") // For the UserView model needed for searching through all users
     implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     implementation ("io.coil-kt:coil-compose:1.4.0")
+    implementation ("androidx.compose.runtime:runtime-livedata")
 
 
 

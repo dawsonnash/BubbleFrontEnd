@@ -2,8 +2,9 @@
 
 package com.example.bubblefrontend
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -39,6 +40,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,41 +59,46 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.ViewModelProvider
 import coil.compose.rememberImagePainter
 import com.example.bubblefrontend.api.FeedData
-import com.example.bubblefrontend.api.NonUser
 import com.example.bubblefrontend.api.NonUserModel
 import com.example.bubblefrontend.api.PostModel
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
-import kotlin.math.ceil
-import kotlin.math.max
+import com.google.gson.Gson
 import kotlin.math.sqrt
 
 class GlobalPage : ComponentActivity() {
     private lateinit var imagePickerLauncher: ActivityResultLauncher<String>
-    // Post data model instantiated and added to Global page
+    // Post data model and nonUserModel added to Global page
     private lateinit var postModel: PostModel
+    private lateinit var nonUserModel: NonUserModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         imagePickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
             // Handle the image URI
             imageUri.value = uri.toString()
         }
+        // Instantiating post model
         postModel = ViewModelProvider(this)[PostModel::class.java]
         postModel.toastMessage.observe(this) { message ->
             Toast.makeText(this, message, Toast.LENGTH_LONG).show()
         }
-
+        // Instantiating nonUserModel
+        nonUserModel = ViewModelProvider(this)[NonUserModel::class.java]
+        nonUserModel.toastMessage.observe(this) { message ->
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        }
         // Default values for page and pageSize
         postModel.fetchPosts(page = 1, pageSize = 10)
 
         setContent {
             BubbleFrontEndTheme {
-                GlobalScreen(postModel) { imagePickerLauncher.launch("image/*") }
+                GlobalScreen(postModel, nonUserModel) { imagePickerLauncher.launch("image/*") }
             }
         }
     }
@@ -117,7 +124,13 @@ fun initializePosts(): List<Post> {
 }
 
 @Composable
-fun FullScreenPostView(post: FeedData, onBack: () -> Unit) {
+fun FullScreenPostView(post: FeedData, nonUserModel: NonUserModel, context: Context, onBack: () -> Unit) {
+
+    nonUserModel.fetchSingleUser(searchQuery = post.username)
+
+    // Observe the singleUser LiveData and react to changes
+    val user by nonUserModel.singleUser.observeAsState()
+
 
     val postImageURL = post.photo_url
     val baseURL = "http://54.202.77.126:8080"
@@ -130,8 +143,7 @@ fun FullScreenPostView(post: FeedData, onBack: () -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White.copy(alpha = 0.2f))
-    ) {}
-    Box(modifier = Modifier.fillMaxSize()) {
+    ) {
         Column {
             Button(onClick = onBack) {
                 Text("Back")
@@ -140,6 +152,15 @@ fun FullScreenPostView(post: FeedData, onBack: () -> Unit) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(8.dp)
+                    // This crashes the app, but will eventually go to user's page
+                    .clickable {
+                        val gson = Gson()
+                        val userJson = gson.toJson(user)
+                        val intent = Intent(context, NonUserPage::class.java).apply {
+                            putExtra("NON_USER_JSON", userJson)
+                        }
+                        context.startActivity(intent)
+                    }
             ) {
                 // Profile picture
                 Image(
@@ -156,28 +177,27 @@ fun FullScreenPostView(post: FeedData, onBack: () -> Unit) {
                         .background(Color.Gray), // Placeholder background
                     contentScale = ContentScale.Crop
 
+
                 )
 
                 Spacer(Modifier.width(8.dp)) // Space between the image and the text
 
                 // Username text
                 Text(
-                    text = post.username ?: "",
+                    text = post.username,
                     fontSize = 20.sp,
                     modifier = Modifier.padding(start = 8.dp) // Add padding between text and profile picture
                 )
             }
-
             Text(
-                text = post.caption ?: "",
-                fontSize = 20.sp,
-                color = Color.Black,
-                textAlign = TextAlign.Left,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            )
-
+                    text = post.caption,
+                    fontSize = 20.sp,
+                    color = Color.Black,
+                    textAlign = TextAlign.Left,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                )
 
             // Display the actual image if there is a picture URL
             Image(
@@ -192,7 +212,9 @@ fun FullScreenPostView(post: FeedData, onBack: () -> Unit) {
 }
 
 @Composable
-fun GlobalScreen(postModel: PostModel, launchImagePicker: () -> Unit) {
+fun GlobalScreen(postModel: PostModel, nonUserModel: NonUserModel, launchImagePicker: () -> Unit) {
+
+    val context = LocalContext.current
     val posts = remember { mutableStateListOf(*initializePosts().toTypedArray()) }
     var showNewPostDialog by remember { mutableStateOf(false) }
 
@@ -209,26 +231,7 @@ fun GlobalScreen(postModel: PostModel, launchImagePicker: () -> Unit) {
         }
     }
 
-    /*
-    // Composable that displays the posts
-    LazyColumn {
-        items(postList) { post ->
 
-            val imageURL = post.photo_url
-            val baseURL = "http://54.202.77.126:8080"
-            val fullImageURL = baseURL + imageURL
-            Row() {
-                Text(text = post.username)
-                Image(
-                    painter = rememberImagePainter(fullImageURL),  // Using Coil to load an image from a URL
-                    contentDescription = "Post Photo",
-                    modifier = Modifier.size(100.dp),
-                    contentScale = ContentScale.Crop
-                )
-            }
-        }
-    }
-    */
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column {
@@ -245,18 +248,22 @@ fun GlobalScreen(postModel: PostModel, launchImagePicker: () -> Unit) {
                     val verticalDistancePx = bubbleRadiusPx * sqrt(3f) * 3 / 4
                     val horizontalDistancePx = bubbleRadiusPx * 2 * 0.75f
 
-                    val columns = 25
-                    //val columns = ceil(sqrt(postList.size.toDouble())).toInt()
-                    val rows = ceil(postList.size.toDouble() / columns).toInt()
-                    Log.d("GlobalScreen", "Number of columns: $columns")
+                    val columns = 4
+                    val rows = 4
+                    // Need to come up with a way that determines number of bubbles
+                    // val columns = ceil(sqrt(postList.size.toDouble())).toInt()
+                    // val rows = ceil(postList.size.toDouble() / columns).toInt()
+                   // Log.d("GlobalScreen", "Number of columns: $columns")
 
                     val totalGridWidthPx = columns * horizontalDistancePx
                     val totalGridHeightPx = rows * verticalDistancePx
                     val screenWidthPx = with(density) { configuration.screenWidthDp.dp.toPx() }
                     val screenHeightPx = with(density) { configuration.screenHeightDp.dp.toPx() }
 
-                    val maxHorizontalScrollPx = max(0f, totalGridWidthPx - screenWidthPx)
-                    val maxVerticalScrollPx = max(0f, totalGridHeightPx - screenHeightPx)
+                    val maxHorizontalScrollPx =
+                    totalGridWidthPx - (1.2f * screenWidthPx) + (horizontalDistancePx / 2)
+                    val maxVerticalScrollPx =
+                    (totalGridWidthPx - (2 * screenHeightPx) + (horizontalDistancePx / 2)) / 1.5f
 
                     val initialOffsetX =
                         if (maxHorizontalScrollPx > 0) -maxHorizontalScrollPx / 2 else 0f
@@ -272,7 +279,7 @@ fun GlobalScreen(postModel: PostModel, launchImagePicker: () -> Unit) {
                             .fillMaxSize()
                             .pointerInput(Unit) {
                                 detectTransformGestures { _, pan, _, _ ->
-                                    Log.d("GlobalScreen", "Pan detected: ${pan.x}, ${pan.y}")
+                                  //  Log.d("GlobalScreen", "Pan detected: ${pan.x}, ${pan.y}")
                                     val newOffsetX =
                                         (offsetX + pan.x).coerceIn(-maxHorizontalScrollPx, 0f)
                                     val newOffsetY =
@@ -309,10 +316,19 @@ fun GlobalScreen(postModel: PostModel, launchImagePicker: () -> Unit) {
 
                             )
                             if (showPostContent && selectedPostData != null) {
-                                FullScreenPostView(post = selectedPostData!!, onBack = {
-                                    showPostContent = false // Hide the full screen content
-                                })
+                                Dialog(onDismissRequest = { showPostContent = false }) {
+                                    Box(modifier = Modifier.fillMaxSize()) {
+                                        FullScreenPostView(
+                                            post = selectedPostData!!,
+                                            nonUserModel,
+                                            context,
+                                            onBack = { showPostContent = false }
+                                        )
+                                    }
+                                }
                             }
+
+
 
                         }
 

@@ -56,7 +56,6 @@ class NonUserPage : ComponentActivity() {
 
 @Composable
 fun NonUserScreen(user: NonUser?) {
-
     val context = LocalContext.current
         Box(
             modifier = Modifier.fillMaxSize()
