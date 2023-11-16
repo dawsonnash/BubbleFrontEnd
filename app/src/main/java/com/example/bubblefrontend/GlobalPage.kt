@@ -3,6 +3,7 @@
 package com.example.bubblefrontend
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -57,6 +58,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
 import coil.compose.rememberImagePainter
@@ -65,6 +67,8 @@ import com.example.bubblefrontend.api.NonUser
 import com.example.bubblefrontend.api.NonUserModel
 import com.example.bubblefrontend.api.PostModel
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
+import kotlin.math.ceil
+import kotlin.math.max
 import kotlin.math.sqrt
 
 class GlobalPage : ComponentActivity() {
@@ -195,31 +199,39 @@ fun GlobalScreen(postModel: PostModel, launchImagePicker: () -> Unit) {
                     val bubbleSizePx = with(density) { 400.dp.toPx() }
                     val bubbleRadiusPx = bubbleSizePx / 1.25f
                     val verticalDistancePx = bubbleRadiusPx * sqrt(3f) * 3 / 4
-                    val screenWidthPx = with(density) { configuration.screenWidthDp.dp.toPx() }
-                    val screenHeightPx = with(density) { configuration.screenHeightDp.dp.toPx() }
                     val horizontalDistancePx = bubbleRadiusPx * 2 * 0.75f
 
-                    // Calculate columns, ensuring we don't divide by zero
-                    val columns = if (horizontalDistancePx > 0) (screenWidthPx / horizontalDistancePx).toInt() else 1
+                    // Need to calculate number of columns based on number of posts
+                    // For some reason only works with 5
+                    //val columns = 5
+
+                    val columns = ceil(sqrt(postList.size.toDouble())).toInt()
+                    val rows = ceil(postList.size.toDouble() / columns).toInt()
+                    Log.d("GlobalScreen", "Number of columns: $columns")
 
                     val totalGridWidthPx = columns * horizontalDistancePx
-                    val maxHorizontalScrollPx = totalGridWidthPx - screenWidthPx
-                    val maxVerticalScrollPx =
-                        (totalGridWidthPx - (2 * screenHeightPx) + (horizontalDistancePx / 2)) / 1.5f
-                    val initialOffsetX = -maxHorizontalScrollPx / 2
-                    val initialOffsetY = -maxVerticalScrollPx / 2
+                    val totalGridHeightPx = rows * verticalDistancePx
+                    val screenWidthPx = with(density) { configuration.screenWidthDp.dp.toPx() }
+                    val screenHeightPx = with(density) { configuration.screenHeightDp.dp.toPx() }
+
+                    val maxHorizontalScrollPx = max(0f, totalGridWidthPx - screenWidthPx)
+                    val maxVerticalScrollPx = max(0f, totalGridHeightPx - screenHeightPx)
+
+                    val initialOffsetX = if (maxHorizontalScrollPx > 0) -maxHorizontalScrollPx / 2 else 0f
+                    val initialOffsetY = if (maxVerticalScrollPx > 0) -maxVerticalScrollPx / 2 else 0f
+
                     var offsetX by remember { mutableStateOf(initialOffsetX) }
                     var offsetY by remember { mutableStateOf(initialOffsetY) }
+
 
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
                             .pointerInput(Unit) {
                                 detectTransformGestures { _, pan, _, _ ->
-                                    val newOffsetX =
-                                        (offsetX + pan.x).coerceIn(-maxHorizontalScrollPx, 0f)
-                                    val newOffsetY =
-                                        (offsetY + pan.y).coerceIn(-maxVerticalScrollPx, 0f)
+                                    Log.d("GlobalScreen", "Pan detected: ${pan.x}, ${pan.y}")
+                                    val newOffsetX = (offsetX + pan.x).coerceIn(-maxHorizontalScrollPx, 0f)
+                                    val newOffsetY = (offsetY + pan.y).coerceIn(-maxVerticalScrollPx, 0f)
                                     offsetX = newOffsetX
                                     offsetY = newOffsetY
                                 }
@@ -229,7 +241,7 @@ fun GlobalScreen(postModel: PostModel, launchImagePicker: () -> Unit) {
                                 translationY = offsetY
                             )
                     ) {
-                        // Instead of 'posts', loop through 'postList' and calculate offsets
+                        // Loop through 'postList' and calculate offsets
                         postList.forEachIndexed { index, postData ->
                             val col = index % columns
                             val row = index / columns
@@ -307,11 +319,18 @@ fun Bubble(post: FeedData, modifier: Modifier) {
             },
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = post.caption ?: "Default Caption",
-            fontSize = 16.sp,
-            color = Color.White
-        )
+        Column() {
+            Text(
+                text = post.username ?: "filler info",
+                fontSize = 20.sp,
+                color = Color.White
+            )
+            Text(
+                text = post.caption ?: "Default Caption",
+                fontSize = 16.sp,
+                color = Color.White
+            )
+        }
     }
 }
 
