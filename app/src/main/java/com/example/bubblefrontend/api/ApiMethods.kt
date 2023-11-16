@@ -51,6 +51,7 @@ interface ApiMethods {
     ): Call<List<NonUser>>
 
     @GET("/api/posts/feed")
+    @Headers("Accept: application/json")
     fun getFeed(
         @Query("p") page: Int? = null, // Page number for pagination
         @Query("ps") pageSize: Int? = null // Page size for pagination

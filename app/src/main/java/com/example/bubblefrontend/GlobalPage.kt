@@ -2,8 +2,8 @@
 
 package com.example.bubblefrontend
 
-import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
@@ -12,10 +12,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +22,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
@@ -38,6 +38,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -50,18 +51,26 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
 import coil.compose.rememberImagePainter
+import com.example.bubblefrontend.api.FeedData
+import com.example.bubblefrontend.api.NonUser
+import com.example.bubblefrontend.api.NonUserModel
+import com.example.bubblefrontend.api.PostModel
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
 import kotlin.math.sqrt
 
 class GlobalPage : ComponentActivity() {
     private lateinit var imagePickerLauncher: ActivityResultLauncher<String>
+    // Post data model instantiated and added to Global page
+    private lateinit var postModel: PostModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,10 +78,17 @@ class GlobalPage : ComponentActivity() {
             // Handle the image URI
             imageUri.value = uri.toString()
         }
+        postModel = ViewModelProvider(this)[PostModel::class.java]
+        postModel.toastMessage.observe(this) { message ->
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        }
+
+        // Default values for page and pageSize
+        postModel.fetchPosts(page = 1, pageSize = 10)
 
         setContent {
             BubbleFrontEndTheme {
-                GlobalScreen { imagePickerLauncher.launch("image/*") }
+                GlobalScreen(postModel) { imagePickerLauncher.launch("image/*") }
             }
         }
     }
@@ -128,10 +144,40 @@ fun FullScreenPostView(post: Post, onBack: () -> Unit) {
 }
 
 @Composable
-fun GlobalScreen(launchImagePicker: () -> Unit) {
+fun GlobalScreen(postModel: PostModel, launchImagePicker: () -> Unit) {
     val posts = remember { mutableStateListOf(*initializePosts().toTypedArray()) }
     var selectedPost by remember { mutableStateOf<Post?>(null) }
     var showNewPostDialog by remember { mutableStateOf(false) }
+
+    // For API called posts
+    var postList by remember { mutableStateOf(listOf<FeedData>()) }
+    LaunchedEffect(key1 = postModel) {
+        // Apparently observeForever is a bad memory practice. try observeAsState
+        postModel.postList.observeForever { newList ->
+            postList = newList
+        }
+    }
+
+    /*
+    // Composable that displays the posts
+    LazyColumn {
+        items(postList) { post ->
+
+            val imageURL = post.photo_url
+            val baseURL = "http://54.202.77.126:8080"
+            val fullImageURL = baseURL + imageURL
+            Row() {
+                Text(text = post.username)
+                Image(
+                    painter = rememberImagePainter(fullImageURL),  // Using Coil to load an image from a URL
+                    contentDescription = "Post Photo",
+                    modifier = Modifier.size(100.dp),
+                    contentScale = ContentScale.Crop
+                )
+            }
+        }
+    }
+    */
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column {
@@ -149,13 +195,15 @@ fun GlobalScreen(launchImagePicker: () -> Unit) {
                     val bubbleSizePx = with(density) { 400.dp.toPx() }
                     val bubbleRadiusPx = bubbleSizePx / 1.25f
                     val verticalDistancePx = bubbleRadiusPx * sqrt(3f) * 3 / 4
-                    val horizontalDistancePx = bubbleRadiusPx * 2 * 0.75f
-                    val columns = 25
-                    val totalGridWidthPx = columns * horizontalDistancePx
                     val screenWidthPx = with(density) { configuration.screenWidthDp.dp.toPx() }
                     val screenHeightPx = with(density) { configuration.screenHeightDp.dp.toPx() }
-                    val maxHorizontalScrollPx =
-                        totalGridWidthPx - (1.2f * screenWidthPx) + (horizontalDistancePx / 2)
+                    val horizontalDistancePx = bubbleRadiusPx * 2 * 0.75f
+
+                    // Calculate columns, ensuring we don't divide by zero
+                    val columns = if (horizontalDistancePx > 0) (screenWidthPx / horizontalDistancePx).toInt() else 1
+
+                    val totalGridWidthPx = columns * horizontalDistancePx
+                    val maxHorizontalScrollPx = totalGridWidthPx - screenWidthPx
                     val maxVerticalScrollPx =
                         (totalGridWidthPx - (2 * screenHeightPx) + (horizontalDistancePx / 2)) / 1.5f
                     val initialOffsetX = -maxHorizontalScrollPx / 2
@@ -181,44 +229,22 @@ fun GlobalScreen(launchImagePicker: () -> Unit) {
                                 translationY = offsetY
                             )
                     ) {
-                        posts.forEachIndexed { index, post ->
+                        // Instead of 'posts', loop through 'postList' and calculate offsets
+                        postList.forEachIndexed { index, postData ->
                             val col = index % columns
                             val row = index / columns
-                            val xOffset =
-                                if (row % 2 == 0) col * horizontalDistancePx else col * horizontalDistancePx + horizontalDistancePx / 2
-                            val yOffset = row * verticalDistancePx * 3 / 4
+                            val xOffset = col * horizontalDistancePx
+                            val yOffset = row * verticalDistancePx
 
-                            Box(
+                            Bubble(
+                                post = postData,
                                 modifier = Modifier
                                     .offset(
                                         x = with(density) { xOffset.toDp() },
-                                        y = with(density) { yOffset.toDp() })
-                                    .size(400.dp)
-                                    .background(
-                                        brush = Brush.radialGradient(
-                                            colors = listOf(
-                                                Color.Magenta,
-                                                Color.Cyan,
-                                                Color.Yellow,
-                                                Color.Magenta
-                                            ),
-                                            center = Offset.Zero,
-                                            radius = bubbleRadiusPx
-                                        ),
-                                        shape = CircleShape
+                                        y = with(density) { yOffset.toDp() }
                                     )
-                                    .padding(16.dp)
-                                    .clickable {
-                                        selectedPost = post // Update the state to the clicked post
-                                    },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = post.text ?: "",
-                                    fontSize = 16.sp,
-                                    color = Color.White
-                                )
-                            }
+                                    .size(400.dp)
+                            )
                         }
                     }
                 }
@@ -252,7 +278,40 @@ fun GlobalScreen(launchImagePicker: () -> Unit) {
                 },
                 launchImagePicker = launchImagePicker
             )
+
         }
+    }
+}
+
+@Composable
+fun Bubble(post: FeedData, modifier: Modifier) {
+    // Define the Bubble UI with clickable behavior
+    Box(
+        modifier = modifier
+            .background(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color.Magenta,
+                        Color.Cyan,
+                        Color.Yellow,
+                        Color.Magenta
+                    ),
+                    center = Offset.Zero,
+                    //BubbleRadiusPx
+                    //radius = 4.3
+                ),
+                shape = CircleShape
+            )
+            .clickable {
+                // Define what happens when a bubble is clicked
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = post.caption ?: "Default Caption",
+            fontSize = 16.sp,
+            color = Color.White
+        )
     }
 }
 
