@@ -44,7 +44,8 @@ data class NonUser(
     val url: String,
     val html_url: String,
     val followers_url: String,
-    val following_url: String
+    val following_url: String,
+    val bio: String
 )
 
 // Apt to change
