@@ -55,6 +55,7 @@ data class FeedData(
     val photo: String,
     val photo_url: String,
     val caption: String,
+    val timeAgo: String,
     val username: String,
     val name: String,
     val profile_picture: String,
@@ -62,5 +63,9 @@ data class FeedData(
     val html_url: String
 )
 
+data class CreatePostResponse(
+    val message: String,
+    val error: String?
+)
 
 

@@ -64,5 +64,14 @@ interface ApiMethods {
         @Query("ps") pageSize: Int? = null // Page size for pagination
     ): Call<List<FeedData>>
 
+    @Multipart
+    @POST("api/posts/upload")
+    fun createPost(
+        @Part("username") username: RequestBody,
+        @Part("caption") caption: RequestBody,
+        @Part image: MultipartBody.Part?,
+    ): Call<CreatePostResponse>
+
+
 }
 

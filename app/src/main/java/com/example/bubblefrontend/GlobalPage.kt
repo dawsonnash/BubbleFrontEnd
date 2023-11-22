@@ -4,6 +4,7 @@ package com.example.bubblefrontend
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -41,7 +42,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.ViewModelProvider
 import coil.compose.rememberImagePainter
+import com.example.bubblefrontend.api.ApiHandler
 import com.example.bubblefrontend.api.FeedData
 import com.example.bubblefrontend.api.NonUserModel
 import com.example.bubblefrontend.api.PostModel
@@ -81,7 +82,7 @@ class GlobalPage : ComponentActivity() {
 
         imagePickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
             // Handle the image URI
-            imageUri.value = uri.toString()
+            imageUri.value = uri
         }
         // Instantiating post model
         postModel = ViewModelProvider(this)[PostModel::class.java]
@@ -103,29 +104,16 @@ class GlobalPage : ComponentActivity() {
         }
     }
     companion object {
-        var imageUri = mutableStateOf<String?>(null)
+        var imageUri = mutableStateOf<Uri?>(null)
     }
 }
 
 
-data class Post(
-    val text: String?,
-    val pictureUrl: String? // Assuming pictures are represented by URLs
-    //Example: Post(text = "Some text", pictureUrl = "http://example.com/picture.jpg")
-    //Example: Post(text = null, pictureUrl = "http://example.com/picture.jpg")
-)
-
-fun initializePosts(): List<Post> {
-    val posts = mutableListOf<Post>()
-    for (i in 1..625) {
-        posts.add(Post(text = "Initialization Post $i", pictureUrl = null)) // Adding a number for differentiation
-    }
-    return posts
-}
 
 @Composable
 fun FullScreenPostView(post: FeedData, nonUserModel: NonUserModel, context: Context, onBack: () -> Unit) {
 
+    // Fetch user profile for selected post
     nonUserModel.fetchSingleUser(searchQuery = post.username)
 
     // Observe the singleUser LiveData and react to changes
@@ -142,7 +130,7 @@ fun FullScreenPostView(post: FeedData, nonUserModel: NonUserModel, context: Cont
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White.copy(alpha = 0.2f))
+            .background(Color.White.copy(alpha = 0.8f))
     ) {
         Column {
             Button(onClick = onBack) {
@@ -151,7 +139,7 @@ fun FullScreenPostView(post: FeedData, nonUserModel: NonUserModel, context: Cont
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(8.dp)
+                modifier = Modifier.padding(12.dp)
                     // This crashes the app, but will eventually go to user's page
                     .clickable {
                         val gson = Gson()
@@ -188,26 +176,35 @@ fun FullScreenPostView(post: FeedData, nonUserModel: NonUserModel, context: Cont
                     fontSize = 20.sp,
                     modifier = Modifier.padding(start = 8.dp) // Add padding between text and profile picture
                 )
+
+                Spacer(Modifier.weight(1f))
+                Text(
+                    text = post.timeAgo,
+                    fontSize = 20.sp,
+                    modifier = Modifier.padding(start = 8.dp) // Add padding between text and profile picture
+                )
             }
             Text(
-                    text = post.caption,
-                    fontSize = 20.sp,
-                    color = Color.Black,
-                    textAlign = TextAlign.Left,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                )
-
-            // Display the actual image if there is a picture URL
-            Image(
-                painter = rememberImagePainter(fullPostImageURL),
-                contentDescription = "Post Image",
+                text = post.caption,
+                fontSize = 20.sp,
+                color = Color.Black,
+                textAlign = TextAlign.Left,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(1f) // Adjust aspect ratio as needed
+                    .padding(16.dp)
             )
+
+            // Display the photo if photo exists
+            if (post.photo == "1") {
+                Image(
+                    painter = rememberImagePainter(fullPostImageURL),
+                    contentDescription = "Post Image",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f) // Adjust aspect ratio as needed
+                )
             }
+        }
         }
 }
 
@@ -215,7 +212,6 @@ fun FullScreenPostView(post: FeedData, nonUserModel: NonUserModel, context: Cont
 fun GlobalScreen(postModel: PostModel, nonUserModel: NonUserModel, launchImagePicker: () -> Unit) {
 
     val context = LocalContext.current
-    val posts = remember { mutableStateListOf(*initializePosts().toTypedArray()) }
     var showNewPostDialog by remember { mutableStateOf(false) }
 
     var showPostContent by remember { mutableStateOf(false) }
@@ -249,14 +245,12 @@ fun GlobalScreen(postModel: PostModel, nonUserModel: NonUserModel, launchImagePi
                     val horizontalDistancePx = bubbleRadiusPx * 2 * 0.75f
 
                     val columns = 4
-                    val rows = 4
                     // Need to come up with a way that determines number of bubbles
                     // val columns = ceil(sqrt(postList.size.toDouble())).toInt()
                     // val rows = ceil(postList.size.toDouble() / columns).toInt()
                    // Log.d("GlobalScreen", "Number of columns: $columns")
 
                     val totalGridWidthPx = columns * horizontalDistancePx
-                    val totalGridHeightPx = rows * verticalDistancePx
                     val screenWidthPx = with(density) { configuration.screenWidthDp.dp.toPx() }
                     val screenHeightPx = with(density) { configuration.screenHeightDp.dp.toPx() }
 
@@ -350,13 +344,8 @@ fun GlobalScreen(postModel: PostModel, nonUserModel: NonUserModel, launchImagePi
 
     // Show dialog for new post creation
     if (showNewPostDialog) {
-        CreatePostDialog(
-            onPostCreate = { newText, newImageUri ->
-                posts.add(
-                    0,
-                    Post(text = newText, pictureUrl = newImageUri)
-                ) // Add new post at the top
-                posts.removeLast() // Remove the oldest post
+        CreatePostDialog(context,
+            onPostCreate = { caption, pickedImageUri ->
                 GlobalPage.imageUri.value = null // Reset the image URI
                 showNewPostDialog = false
             },
@@ -394,12 +383,12 @@ fun Bubble(post: FeedData, showPostContent: Boolean, modifier: Modifier) {
                 .fillMaxSize()
         ) {
             Text(
-                text = post.username ?: "filler info",
+                text = post.username,
                 fontSize = 30.sp,
                 color = Color.White
             )
             Text(
-                text = post.caption ?: "Default Caption",
+                text = post.caption,
                 fontSize = 16.sp,
                 color = Color.White
             )
@@ -410,9 +399,12 @@ fun Bubble(post: FeedData, showPostContent: Boolean, modifier: Modifier) {
 
 
 @Composable
-fun CreatePostDialog(onPostCreate: (String, String?) -> Unit, onDismiss: () -> Unit, launchImagePicker: () -> Unit) {
-    var text by remember { mutableStateOf("") }
+fun CreatePostDialog(context: Context, onPostCreate: (String, Uri?) -> Unit, onDismiss: () -> Unit, launchImagePicker: () -> Unit) {
+    var caption by remember { mutableStateOf("") }
     val pickedImageUri = GlobalPage.imageUri.value
+
+    val profileSharedPreferences = context.getSharedPreferences("ProfileData", Context.MODE_PRIVATE)
+    val username = profileSharedPreferences.getString("username", "")
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -420,8 +412,8 @@ fun CreatePostDialog(onPostCreate: (String, String?) -> Unit, onDismiss: () -> U
         text = {
             Column {
                 TextField(
-                    value = text,
-                    onValueChange = { newText -> text = newText },
+                    value = caption,
+                    onValueChange = { newText -> caption = newText },
                     placeholder = { Text("Enter post content") }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -440,8 +432,11 @@ fun CreatePostDialog(onPostCreate: (String, String?) -> Unit, onDismiss: () -> U
         confirmButton = {
             Button(
                 onClick = {
-                    if (text.isNotEmpty()) {
-                        onPostCreate(text, pickedImageUri)
+                    if (caption.isNotEmpty()) {
+                        val apiHandler = ApiHandler()
+                        if (username != null) {
+                            apiHandler.createNewPost(username, caption, pickedImageUri, context)
+                        }
                     }
                 }
             ) {

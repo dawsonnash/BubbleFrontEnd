@@ -6,7 +6,6 @@ import android.content.SharedPreferences
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.material3.Button
 import com.example.bubblefrontend.GlobalPage
 import com.example.bubblefrontend.LoginPage
 import com.example.bubblefrontend.WelcomePage
@@ -326,6 +325,80 @@ class ApiHandler {
                 })
             }
         }
+
+    fun createNewPost(username: String, caption: String, imageUri: Uri?, context: Context) {
+
+        val retrofit = Retrofit.Builder()
+            .baseUrl("http://54.202.77.126:8080")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        val apiService = retrofit.create(ApiMethods::class.java)
+
+        val accountSharedPreferences = context.getSharedPreferences("AccountDetails", Context.MODE_PRIVATE)
+
+        val token = accountSharedPreferences.getString("token", "") ?: ""
+        val storedUsername = accountSharedPreferences.getString("username", "") ?: ""
+
+        // Was error - "Account doesn't exist" so tryna log it out
+        Log.d("Debug", "Stored Username: $storedUsername, Token: $token")
+
+        // All for uploading the picture. It takes the URI and converts it to a bytearray to be sent
+        val imagePart: MultipartBody.Part? = imageUri?.let { uri ->
+            val byteArray = context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                inputStream.readBytes()
+            }
+
+            byteArray?.let {
+                val mediaType = "image/jpeg".toMediaTypeOrNull()
+                val requestFile = it.toRequestBody(mediaType)
+                MultipartBody.Part.createFormData("image", "user_image.jpg", requestFile)
+            }
+        }
+
+        // This is exactly what is being sent
+        Log.d("Debug", "Sending request with: Token: $token, Username: $storedUsername")
+
+        val username = username.toRequestBody(MultipartBody.FORM)
+        val caption = caption.toRequestBody(MultipartBody.FORM)
+
+        apiService.createPost(username, caption, imagePart).also {
+            it.enqueue(object : Callback<CreatePostResponse> {
+                override fun onResponse(
+                    call: Call<CreatePostResponse>,
+                    response: Response<CreatePostResponse>
+                ) {
+                    if (response.isSuccessful) {
+                        val editProfileResponse = response.body()
+                        val message = editProfileResponse?.message
+
+                        if (!message.isNullOrEmpty()) {
+                            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                        }
+                    } else {
+                        val errorBody = response.errorBody()?.string()
+                        Log.d("Debug", "Error Body: $errorBody")
+
+                        when (response.code()) {
+                            400 -> Toast.makeText(context, "Missing information from client", Toast.LENGTH_LONG).show()
+                            404 -> Toast.makeText(context, "Updated 0 rows", Toast.LENGTH_LONG).show()
+                            500 -> Toast.makeText(context, "Internal server error", Toast.LENGTH_LONG).show()
+                            else -> Toast.makeText(context, "Unknown error", Toast.LENGTH_LONG).show()
+                        }
+
+                        Log.d("Debug", "HTTP Status Code: ${response.code()}")
+                    }
+                }
+
+                override fun onFailure(call: Call<CreatePostResponse>, t: Throwable) {
+                    Log.d("Debug", "Network error details: ${t.localizedMessage}")
+                    Toast.makeText(context, "Network error, bruh", Toast.LENGTH_LONG).show()
+                }
+            })
+        }
+    }
+
+
 
     // For when user login info cannot be retrieved
     fun forceLogout(context: Context, accountSharedPreferences: SharedPreferences){
