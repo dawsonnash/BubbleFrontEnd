@@ -31,6 +31,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -139,7 +141,8 @@ fun FullScreenPostView(post: FeedData, apiHandler: ApiHandler, nonUserModel: Non
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(12.dp)
+                modifier = Modifier
+                    .padding(12.dp)
                     // This crashes the app, but will eventually go to user's page
                     .clickable {
                         val gson = Gson()
@@ -208,12 +211,19 @@ fun FullScreenPostView(post: FeedData, apiHandler: ApiHandler, nonUserModel: Non
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                Column(){
-                     Text(
-                        text = "Likes: ${post.likeCount}",
+                Column {
+                    HeartIcon(post.hasLiked,
                         modifier = Modifier.clickable {
-                        apiHandler.likePost(post.uid, post.postID, context)
+                            if (post.hasLiked == 0) {
+                                apiHandler.likePost(post.uid, post.postID, context)
+                            }
+                            else{
+                                apiHandler.unlikePost(post.uid, post.postID, context)
+                            }
                         })
+                     Text(
+                        text = "Likes: ${post.likeCount}"
+                         )
                     Text(
                         text = "Unlike",
                         modifier = Modifier.clickable {
@@ -227,6 +237,24 @@ fun FullScreenPostView(post: FeedData, apiHandler: ApiHandler, nonUserModel: Non
         }
         }
 }
+
+@Composable
+fun HeartIcon(isLiked: Int, modifier: Modifier) {
+    if (isLiked == 1) {
+        Icon(
+            imageVector = Icons.Filled.Favorite,
+            contentDescription = "Liked",
+            tint = Color.Red
+        )
+    } else {
+        Icon(
+            imageVector = Icons.Outlined.FavoriteBorder,
+            contentDescription = "Not Liked",
+            tint = Color.Gray
+        )
+    }
+}
+
 
 @Composable
 fun GlobalScreen(postModel: PostModel, nonUserModel: NonUserModel, launchImagePicker: () -> Unit) {
@@ -296,7 +324,7 @@ fun GlobalScreen(postModel: PostModel, nonUserModel: NonUserModel, launchImagePi
                             .fillMaxSize()
                             .pointerInput(Unit) {
                                 detectTransformGestures { _, pan, _, _ ->
-                                  //  Log.d("GlobalScreen", "Pan detected: ${pan.x}, ${pan.y}")
+                                    //  Log.d("GlobalScreen", "Pan detected: ${pan.x}, ${pan.y}")
                                     val newOffsetX =
                                         (offsetX + pan.x).coerceIn(-maxHorizontalScrollPx, 0f)
                                     val newOffsetY =

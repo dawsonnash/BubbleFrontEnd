@@ -466,7 +466,7 @@ class ApiHandler {
                     when (response.code()) {
                         200 -> Toast.makeText(context, "You unliked a post!", Toast.LENGTH_LONG).show()
                         400 -> Toast.makeText(context, "User ID or Post ID not provided for delete post like", Toast.LENGTH_LONG).show()
-                        500 -> Toast.makeText(context, "Post could not be unliked", Toast.LENGTH_LONG).show()
+                        500 -> Toast.makeText(context, "Internal server error", Toast.LENGTH_LONG).show()
                         else -> Toast.makeText(context, "Unknown error", Toast.LENGTH_LONG).show()
                     }
 

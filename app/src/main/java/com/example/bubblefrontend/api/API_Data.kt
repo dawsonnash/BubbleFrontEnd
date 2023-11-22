@@ -57,7 +57,7 @@ data class FeedData(
     val caption: String,
     val timeAgo: String,
     val likeCount: Int,
-   // val hasLiked: Int,
+    val hasLiked: Int,
     val username: String,
     val name: String,
     val profile_picture: String,
