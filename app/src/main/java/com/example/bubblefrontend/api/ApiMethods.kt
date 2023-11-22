@@ -1,5 +1,8 @@
 package com.example.bubblefrontend.api
 
+// Notes for future:
+// Look into suspend functions and coroutines
+
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -33,7 +36,6 @@ interface ApiMethods {
         @Path("username") username: String
     ): Call<ProfileResponse>
 
-    // Maybe look into suspedn functions
     @Multipart
     @PUT("api/account/{username}")
     fun editProfile(

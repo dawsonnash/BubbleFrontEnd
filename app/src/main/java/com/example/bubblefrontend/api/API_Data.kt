@@ -1,8 +1,12 @@
 package com.example.bubblefrontend.api
+
+// Login API data
 data class LoginRequest(
     val username: String,
     val password: String)
 data class LoginResponse(val token: String)
+
+// Registration API data
 data class RegistrationRequest(
     val username: String,
     val password: String,
@@ -11,6 +15,7 @@ data class RegistrationRequest(
 )
 data class RegistrationResponse(val message: String)
 
+// User's information
 data class ProfileResponse(
     val username: String,
     val uid: Int,
@@ -35,7 +40,7 @@ data class EditProfileResponse(
     val error: String?
 )
 
-// For user search
+// Non user data - stored as a LiveData array in NonUserModel
 data class NonUser(
     val username: String,
     val uid: Int,
@@ -48,7 +53,7 @@ data class NonUser(
     val bio: String
 )
 
-// Apt to change
+// Post data - stored as a LiveData array in PostModel
 data class FeedData(
     val postID: Int,
     val uid: Int,
@@ -70,6 +75,7 @@ data class CreatePostResponse(
     val error: String?
 )
 
+// Like API data
 data class LikeRequestBody(
     val uid: Int,
     val postID: Int)

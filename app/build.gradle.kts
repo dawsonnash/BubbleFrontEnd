@@ -56,6 +56,10 @@ android {
 }
 
 dependencies {
+
+    // Should transition all versions to the following variable format for futurue ease
+    val workVersion = "2.8.1"
+
     implementation("androidx.core:core-ktx:1.9.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     implementation("androidx.activity:activity-compose:1.7.2")
@@ -83,9 +87,7 @@ dependencies {
     implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     implementation ("io.coil-kt:coil-compose:1.4.0")
     implementation ("androidx.compose.runtime:runtime-livedata")
-
-
-
+    implementation("androidx.work:work-runtime-ktx:$workVersion")
 
 
 }
