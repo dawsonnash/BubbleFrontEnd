@@ -56,6 +56,8 @@ data class FeedData(
     val photo_url: String,
     val caption: String,
     val timeAgo: String,
+    val likeCount: Int,
+   // val hasLiked: Int,
     val username: String,
     val name: String,
     val profile_picture: String,
@@ -67,5 +69,12 @@ data class CreatePostResponse(
     val message: String,
     val error: String?
 )
+
+data class LikeRequestBody(
+    val uid: Int,
+    val postID: Int)
+
+data class LikeResponse(
+    val message: String)
 
 

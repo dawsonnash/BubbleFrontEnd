@@ -111,7 +111,7 @@ class GlobalPage : ComponentActivity() {
 
 
 @Composable
-fun FullScreenPostView(post: FeedData, nonUserModel: NonUserModel, context: Context, onBack: () -> Unit) {
+fun FullScreenPostView(post: FeedData, apiHandler: ApiHandler, nonUserModel: NonUserModel, context: Context, onBack: () -> Unit) {
 
     // Fetch user profile for selected post
     nonUserModel.fetchSingleUser(searchQuery = post.username)
@@ -204,6 +204,26 @@ fun FullScreenPostView(post: FeedData, nonUserModel: NonUserModel, context: Cont
                         .aspectRatio(1f) // Adjust aspect ratio as needed
                 )
             }
+            Row(modifier = Modifier.padding(16.dp)) {
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                Column(){
+                     Text(
+                        text = "Likes: ${post.likeCount}",
+                        modifier = Modifier.clickable {
+                        apiHandler.likePost(post.uid, post.postID, context)
+                        })
+                    Text(
+                        text = "Unlike",
+                        modifier = Modifier.clickable {
+                           // apiHandler.unlikePost(post.uid, post.postID, context)
+                        }
+                    )
+
+            }
+            }
+
         }
         }
 }
@@ -216,6 +236,9 @@ fun GlobalScreen(postModel: PostModel, nonUserModel: NonUserModel, launchImagePi
 
     var showPostContent by remember { mutableStateOf(false) }
     var selectedPostData by remember { mutableStateOf<FeedData?>(null) }
+
+    // Instance for all API calls
+    val apiHandler = ApiHandler()
 
 
     // For API called posts
@@ -295,7 +318,7 @@ fun GlobalScreen(postModel: PostModel, nonUserModel: NonUserModel, launchImagePi
                             val yOffset = row * verticalDistancePx
 
                             Bubble(
-                                post = postData,
+                                post = postData, apiHandler,
                                 showPostContent = showPostContent,
                                 modifier = Modifier
                                     .offset(
@@ -313,7 +336,7 @@ fun GlobalScreen(postModel: PostModel, nonUserModel: NonUserModel, launchImagePi
                                 Dialog(onDismissRequest = { showPostContent = false }) {
                                     Box(modifier = Modifier.fillMaxSize()) {
                                         FullScreenPostView(
-                                            post = selectedPostData!!,
+                                            post = selectedPostData!!, apiHandler,
                                             nonUserModel,
                                             context,
                                             onBack = { showPostContent = false }
@@ -342,7 +365,7 @@ fun GlobalScreen(postModel: PostModel, nonUserModel: NonUserModel, launchImagePi
 
     // Show dialog for new post creation
     if (showNewPostDialog) {
-        CreatePostDialog(context, postModel,
+        CreatePostDialog(context, apiHandler, postModel,
             onPostCreate = { caption, pickedImageUri ->
                 GlobalPage.imageUri.value = null // Reset the image URI
                 showNewPostDialog = false
@@ -358,7 +381,7 @@ fun GlobalScreen(postModel: PostModel, nonUserModel: NonUserModel, launchImagePi
 }
 
 @Composable
-fun Bubble(post: FeedData, showPostContent: Boolean, modifier: Modifier) {
+fun Bubble(post: FeedData, apiHandler: ApiHandler, showPostContent: Boolean, modifier: Modifier) {
 
     val postImageURL = post.photo_url
     val baseURL = "http://54.202.77.126:8080"
@@ -439,7 +462,7 @@ fun Bubble(post: FeedData, showPostContent: Boolean, modifier: Modifier) {
 
 
 @Composable
-fun CreatePostDialog(context: Context, postModel: PostModel, onPostCreate: (String, Uri?) -> Unit, onDismiss: () -> Unit, launchImagePicker: () -> Unit) {
+fun CreatePostDialog(context: Context, apiHandler: ApiHandler, postModel: PostModel, onPostCreate: (String, Uri?) -> Unit, onDismiss: () -> Unit, launchImagePicker: () -> Unit) {
     var caption by remember { mutableStateOf("") }
     val pickedImageUri = GlobalPage.imageUri.value
 
@@ -473,7 +496,6 @@ fun CreatePostDialog(context: Context, postModel: PostModel, onPostCreate: (Stri
             Button(
                 onClick = {
                     if (caption.isNotEmpty()) {
-                        val apiHandler = ApiHandler()
                         if (username != null) {
                             apiHandler.createNewPost(username, caption, pickedImageUri, context)
                             // Updates posts, but could cause problems when we dynamically fetch posts

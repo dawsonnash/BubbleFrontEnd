@@ -72,6 +72,11 @@ interface ApiMethods {
         @Part image: MultipartBody.Part?,
     ): Call<CreatePostResponse>
 
+    @PUT("api/like") // Replace with the actual endpoint
+    fun likePost(
+        @Body likeRequestBody: LikeRequestBody
+    ): Call<LikeResponse>
+
 
 }
 

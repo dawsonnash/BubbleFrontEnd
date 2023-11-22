@@ -398,6 +398,48 @@ class ApiHandler {
         }
     }
 
+    fun likePost(uid: Int, postID: Int, context: Context) {
+        val retrofit = Retrofit.Builder()
+            .baseUrl("http://54.202.77.126:8080") // Replace with your actual base URL
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        val apiService = retrofit.create(ApiMethods::class.java)
+
+        val likeRequestBody = LikeRequestBody(uid, postID)
+
+        apiService.likePost(likeRequestBody).enqueue(object : Callback<LikeResponse> {
+            override fun onResponse(call: Call<LikeResponse>, response: Response<LikeResponse>) {
+                if (response.isSuccessful) {
+                    // Handle successful response
+                    val likeResponse = response.body()
+                    val message = likeResponse?.message
+
+                    if (!message.isNullOrEmpty()) {
+                        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                    }
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Log.d("Debug", "Error Body: $errorBody")
+
+                    when (response.code()) {
+                        200 -> Toast.makeText(context, "You liked a post!", Toast.LENGTH_LONG).show()
+                        400 -> Toast.makeText(context, "User ID or Post ID not provided for post like", Toast.LENGTH_LONG).show()
+                        500 -> Toast.makeText(context, "Post could not be liked", Toast.LENGTH_LONG).show()
+                        else -> Toast.makeText(context, "Unknown error", Toast.LENGTH_LONG).show()
+                    }
+
+                    Log.d("Debug", "HTTP Status Code: ${response.code()}")
+                }
+            }
+
+            override fun onFailure(call: Call<LikeResponse>, t: Throwable) {
+                Log.d("Debug", "Network error details: ${t.localizedMessage}")
+                Toast.makeText(context, "Network error, bruh", Toast.LENGTH_LONG).show()            }
+        })
+    }
+
+
 
 
     // For when user login info cannot be retrieved
