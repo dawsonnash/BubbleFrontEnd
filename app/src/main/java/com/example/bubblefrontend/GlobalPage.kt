@@ -217,7 +217,7 @@ fun FullScreenPostView(post: FeedData, apiHandler: ApiHandler, nonUserModel: Non
                     Text(
                         text = "Unlike",
                         modifier = Modifier.clickable {
-                           // apiHandler.unlikePost(post.uid, post.postID, context)
+                           apiHandler.unlikePost(post.uid, post.postID, context)
                         }
                     )
 

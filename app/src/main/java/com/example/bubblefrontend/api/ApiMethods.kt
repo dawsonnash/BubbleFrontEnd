@@ -11,6 +11,7 @@ import retrofit2.http.Part
 import retrofit2.http.Path
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
+import retrofit2.http.DELETE
 import retrofit2.http.Multipart
 import retrofit2.http.Query
 
@@ -72,11 +73,15 @@ interface ApiMethods {
         @Part image: MultipartBody.Part?,
     ): Call<CreatePostResponse>
 
-    @PUT("api/like") // Replace with the actual endpoint
+    @PUT("api/like")
     fun likePost(
         @Body likeRequestBody: LikeRequestBody
     ): Call<LikeResponse>
 
+    @DELETE("api/like")
+    fun unlikePost(
+        @Body unlikeRequestBody: LikeRequestBody
+    ): Call<LikeResponse>
 
 }
 
