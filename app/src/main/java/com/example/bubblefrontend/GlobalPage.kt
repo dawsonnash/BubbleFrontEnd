@@ -95,7 +95,7 @@ class GlobalPage : ComponentActivity() {
             Toast.makeText(this, message, Toast.LENGTH_LONG).show()
         }
         // Default values for page and pageSize
-        postModel.fetchPosts(page = 1, pageSize = 10)
+        postModel.fetchPosts(page = 1, pageSize = 12)
 
         setContent {
             BubbleFrontEndTheme {
@@ -322,8 +322,6 @@ fun GlobalScreen(postModel: PostModel, nonUserModel: NonUserModel, launchImagePi
                                 }
                             }
 
-
-
                         }
 
                     }
@@ -344,7 +342,7 @@ fun GlobalScreen(postModel: PostModel, nonUserModel: NonUserModel, launchImagePi
 
     // Show dialog for new post creation
     if (showNewPostDialog) {
-        CreatePostDialog(context,
+        CreatePostDialog(context, postModel,
             onPostCreate = { caption, pickedImageUri ->
                 GlobalPage.imageUri.value = null // Reset the image URI
                 showNewPostDialog = false
@@ -361,6 +359,14 @@ fun GlobalScreen(postModel: PostModel, nonUserModel: NonUserModel, launchImagePi
 
 @Composable
 fun Bubble(post: FeedData, showPostContent: Boolean, modifier: Modifier) {
+
+    val postImageURL = post.photo_url
+    val baseURL = "http://54.202.77.126:8080"
+    val fullPostImageURL = baseURL + postImageURL
+
+    val profileImageURL = post.profile_picture
+    val fullProfileImageURL = baseURL + profileImageURL
+
     Box(
         modifier = modifier
             .background(
@@ -382,16 +388,50 @@ fun Bubble(post: FeedData, showPostContent: Boolean, modifier: Modifier) {
             modifier = Modifier
                 .fillMaxSize()
         ) {
+            Row() {
+            Image(
+                painter = rememberImagePainter(
+                    data = fullProfileImageURL,
+                    builder = {
+                        crossfade(true)     // For a smooth image loading transition
+                    }
+                ),
+                contentDescription = "Profile Picture",
+                modifier = Modifier
+                    .size(40.dp) // Set size of profile image
+                    .clip(CircleShape)
+                    .background(Color.Gray), // Placeholder background
+                contentScale = ContentScale.Crop
+            )
+                Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = post.username,
                 fontSize = 30.sp,
                 color = Color.White
             )
+        }
+            if (post.photo == "1") {
+                Image(
+                    painter = rememberImagePainter(
+                        data = fullPostImageURL,
+                        builder = {
+                            crossfade(true)     // For a smooth image loading transition
+                        }
+                    ),
+                    contentDescription = "Post Picture",
+                    modifier = Modifier
+                        .size(140.dp) // Set size of profile image
+                        .clip(CircleShape)
+                        .background(Color.Gray), // Placeholder background
+                    contentScale = ContentScale.Crop
+                )
+            }
             Text(
                 text = post.caption,
                 fontSize = 16.sp,
                 color = Color.White
             )
+
 
         }
     }
@@ -399,7 +439,7 @@ fun Bubble(post: FeedData, showPostContent: Boolean, modifier: Modifier) {
 
 
 @Composable
-fun CreatePostDialog(context: Context, onPostCreate: (String, Uri?) -> Unit, onDismiss: () -> Unit, launchImagePicker: () -> Unit) {
+fun CreatePostDialog(context: Context, postModel: PostModel, onPostCreate: (String, Uri?) -> Unit, onDismiss: () -> Unit, launchImagePicker: () -> Unit) {
     var caption by remember { mutableStateOf("") }
     val pickedImageUri = GlobalPage.imageUri.value
 
@@ -436,6 +476,9 @@ fun CreatePostDialog(context: Context, onPostCreate: (String, Uri?) -> Unit, onD
                         val apiHandler = ApiHandler()
                         if (username != null) {
                             apiHandler.createNewPost(username, caption, pickedImageUri, context)
+                            // Updates posts, but could cause problems when we dynamically fetch posts
+                            postModel.fetchPosts(page = 1, pageSize = 12)
+
                         }
                     }
                 }
