@@ -46,16 +46,26 @@ import coil.annotation.ExperimentalCoilApi
 import coil.compose.rememberImagePainter
 import com.example.bubblefrontend.api.ApiHandler
 import com.example.bubblefrontend.api.ProfileResponse
+import com.example.bubblefrontend.api.RefreshToken
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
 
 class ProfilePage : ComponentActivity() {
+
+    // Testing refreshToken
+    private lateinit var refreshToken: RefreshToken
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             BubbleFrontEndTheme {
                 ProfileScreen()
             }
+            refreshToken = RefreshToken(this)
         }
+    }
+    override fun onDestroy() {
+        super.onDestroy()
+        refreshToken.unregisterPreferenceChangeListener()
     }
 }
 

@@ -1,5 +1,8 @@
 package com.example.bubblefrontend.api
 
+// Notes for future:
+// Look into suspend functions and coroutines
+
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -11,6 +14,7 @@ import retrofit2.http.Part
 import retrofit2.http.Path
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
+import retrofit2.http.DELETE
 import retrofit2.http.Multipart
 import retrofit2.http.Query
 
@@ -32,7 +36,6 @@ interface ApiMethods {
         @Path("username") username: String
     ): Call<ProfileResponse>
 
-    // Maybe look into suspedn functions
     @Multipart
     @PUT("api/account/{username}")
     fun editProfile(
@@ -47,17 +50,40 @@ interface ApiMethods {
     @Headers("Accept: application/json")
     fun getAllUsers(
         // Next line is for if we want to implement searching a specific searchTerm
-       // @Query("searchTerm") searchTerm: String
+        // @Query("searchTerm") searchTerm: String
     ): Call<List<NonUser>>
 
+    @GET("/api/search")
+    @Headers("Accept: application/json")
+    fun getSingleUser(
+        @Query("searchTerm") searchTerm: String
+    ): Call<List<NonUser>>
+
+
     @GET("/api/posts/feed")
+    @Headers("Accept: application/json")
     fun getFeed(
-        @Header("Authorization") token: String,
-        @Query("p") page: Int,
-        @Query("ps") pageSize: Int
-    ): Call<FeedData>
+        @Query("p") page: Int? = null, // Page number for pagination
+        @Query("ps") pageSize: Int? = null // Page size for pagination
+    ): Call<List<FeedData>>
+
+    @Multipart
+    @POST("api/posts/upload")
+    fun createPost(
+        @Part("username") username: RequestBody,
+        @Part("caption") caption: RequestBody,
+        @Part image: MultipartBody.Part?,
+    ): Call<CreatePostResponse>
+
+    @PUT("api/like")
+    fun likePost(
+        @Body likeRequestBody: LikeRequestBody
+    ): Call<LikeResponse>
+
+    @DELETE("api/like")
+    fun unlikePost(
+        @Body unlikeRequestBody: LikeRequestBody
+    ): Call<LikeResponse>
 
 }
-
-
 

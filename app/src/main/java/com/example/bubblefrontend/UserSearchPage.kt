@@ -1,6 +1,5 @@
 package com.example.bubblefrontend
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
@@ -40,32 +39,33 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
 import com.example.bubblefrontend.api.NonUser
-import com.example.bubblefrontend.api.UserViewModel
+import com.example.bubblefrontend.api.NonUserModel
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
 import com.google.gson.Gson
 
 class UserSearchPage : ComponentActivity() {
-    private lateinit var userViewModel: UserViewModel
+    private lateinit var nonUserModel: NonUserModel
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        userViewModel = ViewModelProvider(this)[UserViewModel::class.java]
+        nonUserModel = ViewModelProvider(this)[NonUserModel::class.java]
 
-        userViewModel.toastMessage.observe(this) { message ->
+        nonUserModel.toastMessage.observe(this) { message ->
             Toast.makeText(this, message, Toast.LENGTH_LONG).show()
         }
 
-        userViewModel.fetchUsers()
+        nonUserModel.fetchUsers()
 
         setContent {
             BubbleFrontEndTheme {
-                UserSearchScreen(userViewModel)
+                UserSearchScreen(nonUserModel)
             }
         }
     }
 }
 
 @Composable
-fun UserSearchScreen(userViewModel: UserViewModel){
+fun UserSearchScreen(userViewModel: NonUserModel){
+
     val userList = remember { mutableStateOf(listOf<NonUser>()) }
     LaunchedEffect(key1 = userViewModel) {
         userViewModel.userList.observeForever { newList ->

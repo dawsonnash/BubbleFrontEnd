@@ -104,7 +104,7 @@ fun NonUserScreen(user: NonUser?) {
                 // Bio
                 Row(modifier = Modifier.padding(end = 16.dp)) {
                     Text(
-                        text = "some bio here... nothing from server",
+                        text = user?.bio ?: "Unknown",
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
                         modifier = Modifier.padding(start = 16.dp, top = 8.dp)

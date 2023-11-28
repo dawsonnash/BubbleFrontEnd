@@ -6,7 +6,6 @@ import android.content.SharedPreferences
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.material3.Button
 import com.example.bubblefrontend.GlobalPage
 import com.example.bubblefrontend.LoginPage
 import com.example.bubblefrontend.WelcomePage
@@ -45,8 +44,9 @@ class ApiHandler {
                         // Storing token
                         editor.putString("token", token)
 
-                        // Putting the entered username into SharedPreferences, NOT a response string from the server
+                        // Putting the entered username and password into SharedPreferences, NOT a response string from the server
                         editor.putString("username", username)
+                        editor.putString("password", password)
 
                         // Storing isLoggedIn as true.
                         editor.putBoolean("isLoggedIn", true)
@@ -83,6 +83,7 @@ class ApiHandler {
             }
         })
     }
+
 
     fun handleRegistration(email: String, firstName: String, username: String, password: String, context: Context){
 
@@ -154,7 +155,7 @@ class ApiHandler {
             val token = accountSharedPreferences.getString("token", "") ?: ""
             val storedUsername = accountSharedPreferences.getString("username", "")
 
-            // For errors - "Account doesn't exist" so tryna log it out
+            // For logging errors
             Log.d("Debug", "Stored Username: $storedUsername, Token: $token")
 
             // Begin server call
@@ -169,8 +170,7 @@ class ApiHandler {
                         // Stores the JSON response from the server into the ProfileResponse data class
                         val profileResponse = response.body()
 
-
-                        // Check if profileResponse is not null. I.e, does the account exist & does it have data
+                        // Check if profileResponse is not null, i.e, does the account exist & does it have data
                         if (profileResponse != null) {
 
                             // Store the profile data in the "ProfileData" SharedPreferences file
@@ -262,9 +262,9 @@ class ApiHandler {
             // Was error - "Account doesn't exist" so tryna log it out
             Log.d("Debug", "Stored Username: $storedUsername, Token: $token, Name: $newName, Bio: $newBio")
 
-            // Check to see if user did not enter name in field
-            val newBioPart = newBio.ifBlank { oldBio }.toRequestBody(MultipartBody.FORM)
-            val newNamePart = newName.ifBlank { oldName }.toRequestBody(MultipartBody.FORM)
+            // Check to see if user did not enter name in field. Sends old data, if nothing is entered
+            val bioRequestBody = newBio.ifBlank { oldBio }.toRequestBody(MultipartBody.FORM)
+            val nameRequestBody = newName.ifBlank { oldName }.toRequestBody(MultipartBody.FORM)
 
             // All for uploading the picture. It takes the URI and converts it to a bytearray to be sent
             val imagePart: MultipartBody.Part? = imageUri?.let { uri ->
@@ -287,8 +287,8 @@ class ApiHandler {
                 apiService.editProfile(
                     "Bearer $token",
                     it,
-                    newBioPart,
-                    newNamePart,
+                    bioRequestBody,
+                    nameRequestBody,
                     imagePart
                 )
             }.also {
@@ -326,6 +326,163 @@ class ApiHandler {
                 })
             }
         }
+
+    fun createNewPost(username: String, caption: String, imageUri: Uri?, context: Context) {
+
+        val retrofit = Retrofit.Builder()
+            .baseUrl("http://54.202.77.126:8080")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        val apiService = retrofit.create(ApiMethods::class.java)
+
+        val accountSharedPreferences = context.getSharedPreferences("AccountDetails", Context.MODE_PRIVATE)
+
+        val token = accountSharedPreferences.getString("token", "") ?: ""
+        val storedUsername = accountSharedPreferences.getString("username", "") ?: ""
+
+        // For logging potential errors
+        Log.d("Debug", "Stored Username: $storedUsername, Token: $token")
+
+        // All for uploading the picture. It takes the URI and converts it to a bytearray to be sent
+        val imagePart: MultipartBody.Part? = imageUri?.let { uri ->
+            val byteArray = context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                inputStream.readBytes()
+            }
+
+            byteArray?.let {
+                val mediaType = "image/jpeg".toMediaTypeOrNull()
+                val requestFile = it.toRequestBody(mediaType)
+                MultipartBody.Part.createFormData("image", "user_image.jpg", requestFile)
+            }
+        }
+
+        // For logging errors
+        Log.d("Debug", "Sending request with: Token: $token, Username: $storedUsername")
+
+        // These variables need to be converted to a request body to match server request format. Only for strings, not ints
+        val usernameRequestBody = username.toRequestBody(MultipartBody.FORM)
+        val captionRequestBody = caption.toRequestBody(MultipartBody.FORM)
+
+        apiService.createPost(usernameRequestBody, captionRequestBody, imagePart).also {
+            it.enqueue(object : Callback<CreatePostResponse> {
+                override fun onResponse(
+                    call: Call<CreatePostResponse>,
+                    response: Response<CreatePostResponse>
+                ) {
+                    if (response.isSuccessful) {
+                        val editProfileResponse = response.body()
+                        val message = editProfileResponse?.message
+
+                        if (!message.isNullOrEmpty()) {
+                            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                        }
+                    } else {
+                        val errorBody = response.errorBody()?.string()
+                        Log.d("Debug", "Error Body: $errorBody")
+
+                        when (response.code()) {
+                            400 -> Toast.makeText(context, "Missing information from client", Toast.LENGTH_LONG).show()
+                            404 -> Toast.makeText(context, "Updated 0 rows", Toast.LENGTH_LONG).show()
+                            500 -> Toast.makeText(context, "Internal server error", Toast.LENGTH_LONG).show()
+                            else -> Toast.makeText(context, "Unknown error", Toast.LENGTH_LONG).show()
+                        }
+
+                        Log.d("Debug", "HTTP Status Code: ${response.code()}")
+                    }
+                }
+
+                override fun onFailure(call: Call<CreatePostResponse>, t: Throwable) {
+                    Log.d("Debug", "Network error details: ${t.localizedMessage}")
+                    Toast.makeText(context, "Network error, bruh", Toast.LENGTH_LONG).show()
+                }
+            })
+        }
+    }
+
+    fun likePost(uid: Int, postID: Int, context: Context) {
+        val retrofit = Retrofit.Builder()
+            .baseUrl("http://54.202.77.126:8080")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        val apiService = retrofit.create(ApiMethods::class.java)
+
+        val likeRequestBody = LikeRequestBody(uid, postID)
+
+        apiService.likePost(likeRequestBody).enqueue(object : Callback<LikeResponse> {
+            override fun onResponse(call: Call<LikeResponse>, response: Response<LikeResponse>) {
+                if (response.isSuccessful) {
+                    // Handle successful response
+                    val likeResponse = response.body()
+                    val message = likeResponse?.message
+
+                    if (!message.isNullOrEmpty()) {
+                        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                    }
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Log.d("Debug", "Error Body: $errorBody")
+
+                    when (response.code()) {
+                        200 -> Toast.makeText(context, "You liked a post!", Toast.LENGTH_LONG).show()
+                        400 -> Toast.makeText(context, "User ID or Post ID not provided for post like", Toast.LENGTH_LONG).show()
+                        500 -> Toast.makeText(context, "Post could not be liked", Toast.LENGTH_LONG).show()
+                        else -> Toast.makeText(context, "Unknown error", Toast.LENGTH_LONG).show()
+                    }
+
+                    Log.d("Debug", "HTTP Status Code: ${response.code()}")
+                }
+            }
+
+            override fun onFailure(call: Call<LikeResponse>, t: Throwable) {
+                Log.d("Debug", "Network error details: ${t.localizedMessage}")
+                Toast.makeText(context, "Network error, bruh", Toast.LENGTH_LONG).show()            }
+        })
+    }
+
+    fun unlikePost(uid: Int, postID: Int, context: Context) {
+        val retrofit = Retrofit.Builder()
+            .baseUrl("http://54.202.77.126:8080")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        val apiService = retrofit.create(ApiMethods::class.java)
+
+        val unlikeRequestBody = LikeRequestBody(uid, postID)
+
+        apiService.likePost(unlikeRequestBody).enqueue(object : Callback<LikeResponse> {
+            override fun onResponse(call: Call<LikeResponse>, response: Response<LikeResponse>) {
+                if (response.isSuccessful) {
+                    // Handle successful response
+                    val unlikeResponse = response.body()
+                    val message = unlikeResponse?.message
+
+                    if (!message.isNullOrEmpty()) {
+                        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                    }
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Log.d("Debug", "Error Body: $errorBody")
+
+                    when (response.code()) {
+                        200 -> Toast.makeText(context, "You unliked a post!", Toast.LENGTH_LONG).show()
+                        400 -> Toast.makeText(context, "User ID or Post ID not provided for delete post like", Toast.LENGTH_LONG).show()
+                        500 -> Toast.makeText(context, "Internal server error", Toast.LENGTH_LONG).show()
+                        else -> Toast.makeText(context, "Unknown error", Toast.LENGTH_LONG).show()
+                    }
+
+                    Log.d("Debug", "HTTP Status Code: ${response.code()}")
+                }
+            }
+
+            override fun onFailure(call: Call<LikeResponse>, t: Throwable) {
+                Log.d("Debug", "Network error details: ${t.localizedMessage}")
+                Toast.makeText(context, "Network error, bruh", Toast.LENGTH_LONG).show()            }
+        })
+    }
+
+
 
     // For when user login info cannot be retrieved
     fun forceLogout(context: Context, accountSharedPreferences: SharedPreferences){
