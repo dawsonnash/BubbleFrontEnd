@@ -448,7 +448,7 @@ class ApiHandler {
 
     }
 
-    fun unlikePost(uid: Int, postID: Int, context: Context) {
+    fun unlikePost(uid: Int, postID: Int, uiFeedData: UiFeedData, context: Context) {
         val retrofit = Retrofit.Builder()
             .baseUrl("http://54.202.77.126:8080")
             .addConverterFactory(GsonConverterFactory.create())
@@ -464,6 +464,10 @@ class ApiHandler {
                     val unlikeResponse = response.body()
                     val message = unlikeResponse?.message
 
+                    // Update the UiPostModel's state
+                    uiFeedData.likeCount.value = uiFeedData.likeCount.value + 1
+                    uiFeedData.hasLiked.value = 1
+
                     if (!message.isNullOrEmpty()) {
                         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
                     }
@@ -471,10 +475,10 @@ class ApiHandler {
                     // Handle error codes based on API doc
                     when (response.code()) {
                         400 -> {
-                            Toast.makeText(context, "User ID or Post ID not provided for post like", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "User ID or Post ID not provided for post unlike", Toast.LENGTH_LONG).show()
                         }
                         500 -> {
-                            Toast.makeText(context, "Post could not be liked", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "Post could not be unliked", Toast.LENGTH_LONG).show()
                         }
                         else -> {
                             // Unknown errors

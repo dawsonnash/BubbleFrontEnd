@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -215,6 +216,8 @@ fun FullScreenPostView(post: FeedData, uiFeedData: LiveData<List<UiFeedData>>, a
                 Column {
                     if (uiPost != null) {
                         HeartIcon(post, uiPost, apiHandler, context, modifier = Modifier)
+                        Log.d("Debug", "Has Liked: ${post.hasLiked}")
+                        Log.d("Debug", "UI has Liked: ${uiPost.hasLiked}")
                     }
                     else{
                         // do something if uiPost is null
@@ -242,7 +245,7 @@ fun HeartIcon(post: FeedData, uiFeedData: UiFeedData, apiHandler: ApiHandler, co
                 if (hasLiked == 0) {
                     apiHandler.likePost(post.uid, post.postID, uiFeedData, context)
                 } else {
-                   // unlikePost(post, context)
+                    apiHandler.unlikePost(post.uid, post.postID, uiFeedData, context)
                 }
             }
     )
@@ -487,6 +490,7 @@ fun Bubble(post: FeedData, apiHandler: ApiHandler, showPostContent: Boolean, mod
 }
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreatePostDialog(context: Context, apiHandler: ApiHandler, postModel: PostModel, onPostCreate: (String, Uri?) -> Unit, onDismiss: () -> Unit, launchImagePicker: () -> Unit) {
     var caption by remember { mutableStateOf("") }
