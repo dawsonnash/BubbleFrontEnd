@@ -1,6 +1,7 @@
 package com.example.bubblefrontend.api
 
 import android.util.Log
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import retrofit2.Call
@@ -9,10 +10,13 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-class PostModel : ViewModel() {
+class PostModel() : ViewModel() {
 
     // LiveData to store a list of posts
     val postList = MutableLiveData<List<FeedData>>()
+
+    private val _uiPostList = MutableLiveData<List<UiFeedData>>()
+    val uiPostList: LiveData<List<UiFeedData>> = _uiPostList
 
     val toastMessage = MutableLiveData<String>()
 
@@ -26,9 +30,14 @@ class PostModel : ViewModel() {
     fun fetchPosts(page: Int, pageSize: Int) {
         apiService.getFeed(page, pageSize).enqueue(object : Callback<List<FeedData>> {
             override fun onResponse(call: Call<List<FeedData>>, response: Response<List<FeedData>>) {
-                if (response.isSuccessful) {
-                    postList.postValue(response.body())
-                    Log.d("PostModel", "Posts fetched: ${response.body()}")
+                if (response.isSuccessful)  {
+                    val feedDataList = response.body() ?: listOf()
+                    postList.postValue(feedDataList)
+
+                    val uiFeedDataList = feedDataList.map { feedData ->
+                        UiFeedData(feedData)
+                    }
+                    _uiPostList.postValue(uiFeedDataList)
                 } else {
                     handleErrorResponse(response)
                 }

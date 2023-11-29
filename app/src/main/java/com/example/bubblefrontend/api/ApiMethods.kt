@@ -52,14 +52,13 @@ interface ApiMethods {
         // Next line is for if we want to implement searching a specific searchTerm
         // @Query("searchTerm") searchTerm: String
     ): Call<List<NonUser>>
-
+/*
     @GET("/api/search")
     @Headers("Accept: application/json")
     fun getSingleUser(
         @Query("searchTerm") searchTerm: String
     ): Call<List<NonUser>>
-
-
+*/
     @GET("/api/posts/feed")
     @Headers("Accept: application/json")
     fun getFeed(
@@ -82,8 +81,8 @@ interface ApiMethods {
 
     @DELETE("api/like")
     fun unlikePost(
-        @Body unlikeRequestBody: LikeRequestBody
-    ): Call<LikeResponse>
+        @Body unlikeRequestBody: UnlikeRequestBody
+    ): Call<UnlikeResponse>
 
 }
 

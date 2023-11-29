@@ -63,12 +63,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModelProvider
 import coil.compose.rememberImagePainter
 import com.example.bubblefrontend.api.ApiHandler
 import com.example.bubblefrontend.api.FeedData
 import com.example.bubblefrontend.api.NonUserModel
 import com.example.bubblefrontend.api.PostModel
+import com.example.bubblefrontend.api.UiFeedData
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
 import com.google.gson.Gson
 import kotlin.math.sqrt
@@ -98,6 +100,7 @@ class GlobalPage : ComponentActivity() {
         }
         // Default values for page and pageSize
         postModel.fetchPosts(page = 1, pageSize = 12)
+        nonUserModel.fetchUsers()
 
         setContent {
             BubbleFrontEndTheme {
@@ -113,14 +116,12 @@ class GlobalPage : ComponentActivity() {
 
 
 @Composable
-fun FullScreenPostView(post: FeedData, apiHandler: ApiHandler, nonUserModel: NonUserModel, context: Context, onBack: () -> Unit) {
-
-    // Fetch user profile for selected post
-    nonUserModel.fetchSingleUser(searchQuery = post.username)
-
+fun FullScreenPostView(post: FeedData, uiFeedData: LiveData<List<UiFeedData>>, apiHandler: ApiHandler, nonUserModel: NonUserModel, context: Context, onBack: () -> Unit) {
     // Observe the singleUser LiveData and react to changes
     val user by nonUserModel.singleUser.observeAsState()
 
+    val uiPosts by uiFeedData.observeAsState(initial = listOf())
+    val uiPost = uiPosts.find { it.feedData.postID == post.postID }
 
     val postImageURL = post.photo_url
     val baseURL = "http://54.202.77.126:8080"
@@ -212,42 +213,42 @@ fun FullScreenPostView(post: FeedData, apiHandler: ApiHandler, nonUserModel: Non
                 Spacer(modifier = Modifier.weight(1f))
 
                 Column {
-                    HeartIcon(post.hasLiked,
-                        modifier = Modifier.clickable {
-                            if (post.hasLiked == 0) {
-                                apiHandler.likePost(post.uid, post.postID, context)
-                            }
-                            else{
-                                apiHandler.unlikePost(post.uid, post.postID, context)
-                            }
-                        })
-                     Text(
-                        text = "Likes: ${post.likeCount}"
-                         )
-
+                    if (uiPost != null) {
+                        HeartIcon(post, uiPost, apiHandler, context, modifier = Modifier)
+                    }
+                    else{
+                        // do something if uiPost is null
+                    }
             }
             }
 
         }
-        }
+    }
 }
 
 @Composable
-fun HeartIcon(isLiked: Int, modifier: Modifier) {
-    if (isLiked == 1) {
-        Icon(
-            imageVector = Icons.Filled.Favorite,
-            contentDescription = "Liked",
-            tint = Color.Red
-        )
-    } else {
-        Icon(
-            imageVector = Icons.Outlined.FavoriteBorder,
-            contentDescription = "Not Liked",
-            tint = Color.Gray
-        )
-    }
+fun HeartIcon(post: FeedData, uiFeedData: UiFeedData, apiHandler: ApiHandler, context: Context, modifier: Modifier) {
+
+    val hasLiked by uiFeedData.hasLiked
+    val likeCount by uiFeedData.likeCount
+
+
+    Icon(
+        imageVector = if (hasLiked == 1) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+        contentDescription = if (hasLiked == 1) "Liked" else "Not Liked",
+        tint = if (hasLiked == 1) Color.Red else Color.Gray,
+        modifier = modifier
+            .clickable {
+                if (hasLiked == 0) {
+                    apiHandler.likePost(post.uid, post.postID, uiFeedData, context)
+                } else {
+                   // unlikePost(post, context)
+                }
+            }
+    )
+    Text(text = "Likes: $likeCount")
 }
+
 
 
 @Composable
@@ -265,6 +266,9 @@ fun GlobalScreen(postModel: PostModel, nonUserModel: NonUserModel, launchImagePi
 
     // For API called posts
     var postList by remember { mutableStateOf(listOf<FeedData>()) }
+    // For reactive UI elements
+    val uiPostList by postModel.uiPostList.observeAsState(initial = listOf())
+
     LaunchedEffect(key1 = postModel) {
         // Apparently observeForever is a bad memory practice. try observeAsState
         postModel.postList.observeForever { newList ->
@@ -358,7 +362,7 @@ fun GlobalScreen(postModel: PostModel, nonUserModel: NonUserModel, launchImagePi
                                 Dialog(onDismissRequest = { showPostContent = false }) {
                                     Box(modifier = Modifier.fillMaxSize()) {
                                         FullScreenPostView(
-                                            post = selectedPostData!!, apiHandler,
+                                            post = selectedPostData!!, postModel.uiPostList, apiHandler,
                                             nonUserModel,
                                             context,
                                             onBack = { showPostContent = false }

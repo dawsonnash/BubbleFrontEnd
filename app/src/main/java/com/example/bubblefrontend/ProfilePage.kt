@@ -91,6 +91,8 @@ fun ProfileScreen() {
     val profileSharedPreferences = context.getSharedPreferences("ProfileData", Context.MODE_PRIVATE)
     val name = profileSharedPreferences.getString("name", "")
     val username = profileSharedPreferences.getString("username", "")
+    val profilePicture = profileSharedPreferences.getString("profile_picture", "")
+
 
     if (profileData.value != null) {
         // UI to display profile
@@ -150,7 +152,9 @@ fun ProfileScreen() {
                     SettingsIcon()
                 }
 
-                ProfileImageFollowersFollowing(context, profileSharedPreferences)
+                if (profilePicture != null) {
+                    ProfileImageFollowersFollowing(context, profilePicture, profileSharedPreferences)
+                }
 
 
                 Text(
@@ -208,7 +212,7 @@ fun ProfileScreen() {
 
 
 @Composable
-fun ProfileImageFollowersFollowing(context: Context, profileSharedPreferences: SharedPreferences) {
+fun ProfileImageFollowersFollowing(context: Context, profilePicture: String, profileSharedPreferences: SharedPreferences) {
 
     val followers = profileSharedPreferences.getInt("followers", -1)
     val following = profileSharedPreferences.getInt("following", -1)
@@ -219,7 +223,7 @@ fun ProfileImageFollowersFollowing(context: Context, profileSharedPreferences: S
         verticalAlignment = Alignment.CenterVertically
 
     ) {
-        ProfileIcon(context, Modifier
+        ProfileIcon(context, profilePicture, Modifier
             .padding(start = 16.dp, top = 16.dp)
             )
 
@@ -277,13 +281,10 @@ fun ProfileImageFollowersFollowing(context: Context, profileSharedPreferences: S
 }
 @OptIn(ExperimentalCoilApi::class)
 @Composable
-fun ProfileIcon(context: Context, modifier: Modifier = Modifier) {
+fun ProfileIcon(context: Context, profilePicture: String, modifier: Modifier = Modifier) {
 
-    // Probably put this functionality in the API handler
-    val profileSharedPreferences = context.getSharedPreferences("ProfileData", Context.MODE_PRIVATE)
-    val imageURL = profileSharedPreferences.getString("profile_picture", "")
     val baseURL = "http://54.202.77.126:8080"
-    val fullImageURL = baseURL + imageURL
+    val fullImageURL = baseURL + profilePicture
 
     Surface(
         modifier = modifier

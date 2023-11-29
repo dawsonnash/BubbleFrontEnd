@@ -54,6 +54,7 @@ class NonUserModel : ViewModel() {
             }
         })
     }
+    /*
     fun fetchSingleUser(searchQuery: String) {
 
         apiService?.getSingleUser(searchTerm = searchQuery)?.enqueue(object : Callback<List<NonUser>> {
@@ -85,4 +86,5 @@ class NonUserModel : ViewModel() {
             }
         })
     }
+    */
 }

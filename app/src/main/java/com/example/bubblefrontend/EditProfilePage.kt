@@ -1,5 +1,6 @@
 package com.example.bubblefrontend
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -42,6 +43,8 @@ class EditProfilePage : ComponentActivity() {
 @Composable
 fun EditProfileScreen() {
     val context = LocalContext.current
+    val profileSharedPreferences = context.getSharedPreferences("ProfileData", Context.MODE_PRIVATE)
+
     var newBio by remember { mutableStateOf("") }
     var newName by remember { mutableStateOf("") }
     var imageURI by remember { mutableStateOf<Uri?>(null) }  // <-- add this line
@@ -113,7 +116,6 @@ fun EditProfileScreen() {
                     // Send the bio update request
                     val apiHandler = ApiHandler()
                     apiHandler.handleEditProfile(newBio, newName,imageURI, context)
-
                 }
             ),
             modifier = Modifier.fillMaxWidth()
