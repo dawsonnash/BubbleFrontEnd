@@ -1,5 +1,8 @@
 package com.example.bubblefrontend.api
 
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+
 // Login API data
 data class LoginRequest(
     val username: String,
@@ -63,13 +66,20 @@ data class FeedData(
     val timeAgo: String,
     val likeCount: Int,
     val hasLiked: Int,
+    // var likeCount: MutableState<Int>,
+    // var hasLiked: MutableState<Int>,
+
     val username: String,
     val name: String,
     val profile_picture: String,
     val url: String,
     val html_url: String
 )
-
+data class UiFeedData(
+    val feedData: FeedData,
+    val likeCount: MutableState<Int> = mutableStateOf(feedData.likeCount),
+    val hasLiked: MutableState<Int> = mutableStateOf(feedData.hasLiked)
+)
 data class CreatePostResponse(
     val message: String,
     val error: String?
@@ -81,6 +91,12 @@ data class LikeRequestBody(
     val postID: Int)
 
 data class LikeResponse(
-    val message: String)
+    val message: String?,
+    val error: String?)
 
-
+data class UnlikeRequestBody(
+    val uid: Int,
+    val postID: Int)
+data class UnlikeResponse(
+    val message: String?,
+    val error: String?)

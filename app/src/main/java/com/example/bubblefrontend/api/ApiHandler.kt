@@ -94,7 +94,7 @@ class ApiHandler {
 
         val apiService = retrofit.create(ApiMethods::class.java)
 
-        val registrationRequest = RegistrationRequest(email, firstName, username, password)  // Need to add last name
+        val registrationRequest = RegistrationRequest(username, password, email, firstName)  // Need to add last name
         val call = apiService.registerUser(registrationRequest)
 
         call.enqueue(object : Callback<RegistrationResponse> {
@@ -400,7 +400,7 @@ class ApiHandler {
         }
     }
 
-    fun likePost(uid: Int, postID: Int, context: Context) {
+    fun likePost(uid: Int, postID: Int, uiFeedData: UiFeedData, context: Context) {
         val retrofit = Retrofit.Builder()
             .baseUrl("http://54.202.77.126:8080")
             .addConverterFactory(GsonConverterFactory.create())
@@ -409,39 +409,46 @@ class ApiHandler {
         val apiService = retrofit.create(ApiMethods::class.java)
 
         val likeRequestBody = LikeRequestBody(uid, postID)
-
-        apiService.likePost(likeRequestBody).enqueue(object : Callback<LikeResponse> {
+        val call = apiService.likePost(likeRequestBody)
+        call.enqueue(object : Callback<LikeResponse> {
             override fun onResponse(call: Call<LikeResponse>, response: Response<LikeResponse>) {
                 if (response.isSuccessful) {
-                    // Handle successful response
                     val likeResponse = response.body()
                     val message = likeResponse?.message
+
+                    // Update the UiPostModel's state
+                    uiFeedData.likeCount.value = uiFeedData.likeCount.value + 1
+                    uiFeedData.hasLiked.value = 1
 
                     if (!message.isNullOrEmpty()) {
                         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
                     }
                 } else {
-                    val errorBody = response.errorBody()?.string()
-                    Log.d("Debug", "Error Body: $errorBody")
-
+                    // Handle error codes based on API doc
                     when (response.code()) {
-                        200 -> Toast.makeText(context, "You liked a post!", Toast.LENGTH_LONG).show()
-                        400 -> Toast.makeText(context, "User ID or Post ID not provided for post like", Toast.LENGTH_LONG).show()
-                        500 -> Toast.makeText(context, "Post could not be liked", Toast.LENGTH_LONG).show()
-                        else -> Toast.makeText(context, "Unknown error", Toast.LENGTH_LONG).show()
+                        400 -> {
+                            Toast.makeText(context, "User ID or Post ID not provided for post like", Toast.LENGTH_LONG).show()
+                        }
+                        500 -> {
+                            Toast.makeText(context, "Post could not be liked", Toast.LENGTH_LONG).show()
+                        }
+                        else -> {
+                            // Unknown errors
+                            Toast.makeText(context, "Unknown error", Toast.LENGTH_LONG).show()
+                        }
                     }
-
-                    Log.d("Debug", "HTTP Status Code: ${response.code()}")
                 }
             }
 
             override fun onFailure(call: Call<LikeResponse>, t: Throwable) {
-                Log.d("Debug", "Network error details: ${t.localizedMessage}")
-                Toast.makeText(context, "Network error, bruh", Toast.LENGTH_LONG).show()            }
+                // network failure
+                Toast.makeText(context, "Network error", Toast.LENGTH_LONG).show()
+            }
         })
+
     }
 
-    fun unlikePost(uid: Int, postID: Int, context: Context) {
+    fun unlikePost(uid: Int, postID: Int, uiFeedData: UiFeedData, context: Context) {
         val retrofit = Retrofit.Builder()
             .baseUrl("http://54.202.77.126:8080")
             .addConverterFactory(GsonConverterFactory.create())
@@ -449,39 +456,45 @@ class ApiHandler {
 
         val apiService = retrofit.create(ApiMethods::class.java)
 
-        val unlikeRequestBody = LikeRequestBody(uid, postID)
-
-        apiService.likePost(unlikeRequestBody).enqueue(object : Callback<LikeResponse> {
-            override fun onResponse(call: Call<LikeResponse>, response: Response<LikeResponse>) {
+        val unlikeRequestBody = UnlikeRequestBody(uid, postID)
+        val call = apiService.unlikePost(unlikeRequestBody)
+        call.enqueue(object : Callback<UnlikeResponse> {
+            override fun onResponse(call: Call<UnlikeResponse>, response: Response<UnlikeResponse>) {
                 if (response.isSuccessful) {
-                    // Handle successful response
                     val unlikeResponse = response.body()
                     val message = unlikeResponse?.message
+
+                    // Update the UiPostModel's state
+                    uiFeedData.likeCount.value = uiFeedData.likeCount.value + 1
+                    uiFeedData.hasLiked.value = 1
 
                     if (!message.isNullOrEmpty()) {
                         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
                     }
                 } else {
-                    val errorBody = response.errorBody()?.string()
-                    Log.d("Debug", "Error Body: $errorBody")
-
+                    // Handle error codes based on API doc
                     when (response.code()) {
-                        200 -> Toast.makeText(context, "You unliked a post!", Toast.LENGTH_LONG).show()
-                        400 -> Toast.makeText(context, "User ID or Post ID not provided for delete post like", Toast.LENGTH_LONG).show()
-                        500 -> Toast.makeText(context, "Internal server error", Toast.LENGTH_LONG).show()
-                        else -> Toast.makeText(context, "Unknown error", Toast.LENGTH_LONG).show()
+                        400 -> {
+                            Toast.makeText(context, "User ID or Post ID not provided for post unlike", Toast.LENGTH_LONG).show()
+                        }
+                        500 -> {
+                            Toast.makeText(context, "Post could not be unliked", Toast.LENGTH_LONG).show()
+                        }
+                        else -> {
+                            // Unknown errors
+                            Toast.makeText(context, "Unknown error", Toast.LENGTH_LONG).show()
+                        }
                     }
-
-                    Log.d("Debug", "HTTP Status Code: ${response.code()}")
                 }
             }
 
-            override fun onFailure(call: Call<LikeResponse>, t: Throwable) {
-                Log.d("Debug", "Network error details: ${t.localizedMessage}")
-                Toast.makeText(context, "Network error, bruh", Toast.LENGTH_LONG).show()            }
+            override fun onFailure(call: Call<UnlikeResponse>, t: Throwable) {
+                // network failure
+                Toast.makeText(context, "Network error", Toast.LENGTH_LONG).show()
+            }
         })
-    }
 
+    }
 
 
     // For when user login info cannot be retrieved
