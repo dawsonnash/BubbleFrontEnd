@@ -4,7 +4,11 @@ package com.example.bubblefrontend
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Paint
 import android.net.Uri
+import androidx.compose.ui.geometry.Size
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -12,6 +16,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -62,6 +67,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -88,11 +94,25 @@ import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
+import com.google.android.gms.maps.Projection
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.CircleOptions
+import com.google.android.gms.maps.model.GroundOverlayOptions
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.VisibleRegion
 import com.google.gson.Gson
+import kotlinx.coroutines.delay
+import android.graphics.Canvas
+import androidx.core.content.ContextCompat
+import com.google.android.gms.maps.model.LatLngBounds
+import kotlin.math.PI
+import kotlin.math.atan
 import kotlin.math.cos
 import kotlin.math.floor
 import kotlin.math.ln
 import kotlin.math.pow
+import kotlin.math.sinh
 import kotlin.math.sqrt
 import kotlin.math.tan
 
@@ -136,7 +156,7 @@ fun OmniverseScreen() {
     var tileCoordinates by remember { mutableStateOf<Pair<Int, Int>?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        MapViewContainer(mapView, tileCoordinates) { newTileCoordinates ->
+        MapViewContainer(mapView, tileCoordinates ){ newTileCoordinates ->
             tileCoordinates = newTileCoordinates
         }
 
@@ -153,26 +173,22 @@ fun OmniverseScreen() {
     }
 }
 
-
 @Composable
 fun MapViewContainer(
     mapView: MapView,
     tileCoordinates: Pair<Int, Int>?,
-    updateTileCoordinates: (Pair<Int, Int>) -> Unit) {
-    val mapView = rememberMapViewWithLifecycle()
-    var tileCoordinates by remember { mutableStateOf<Pair<Int, Int>?>(null) }
-
+    updateTileCoordinates: (Pair<Int, Int>) -> Unit
+) {
     AndroidView({ mapView }) { mapView ->
         mapView.getMapAsync { googleMap ->
-            // Configure your map here
             googleMap.mapType = GoogleMap.MAP_TYPE_NORMAL
-
-            // Set initial zoom level to 5 and disable user zoom interactions
             googleMap.moveCamera(CameraUpdateFactory.zoomTo(5.0f))
-            googleMap.uiSettings.isZoomControlsEnabled = false // Disable zoom controls
-            googleMap.uiSettings.isZoomGesturesEnabled = false // Disable zoom gestures
 
-            // Listener for map movement
+            // Add the semi-transparent overlay here
+            addMapOverlay(googleMap)
+
+            // Initialize markers for each tile
+            initializeTileMarkers(googleMap)
             googleMap.setOnCameraIdleListener {
                 val centerLat = googleMap.cameraPosition.target.latitude
                 val centerLon = googleMap.cameraPosition.target.longitude
@@ -183,11 +199,100 @@ fun MapViewContainer(
             }
         }
     }
-    Column(modifier = Modifier.fillMaxSize()) {
-        tileCoordinates?.let {
-            Text("Current Tile: X=${it.first}, Y=${it.second}", modifier = Modifier.padding(16.dp))
+}
+fun addMapOverlay(googleMap: GoogleMap) {
+    val overlaySize = LatLngBounds(LatLng(-85.0, -180.0), LatLng(85.0, 180.0)) // World size
+    val overlayBitmap = createTransparentOverlayBitmap()
+
+    val groundOverlayOptions = GroundOverlayOptions()
+        .image(BitmapDescriptorFactory.fromBitmap(overlayBitmap))
+        .positionFromBounds(overlaySize)
+        .transparency(0f) // Adjust transparency if needed
+        .zIndex(-1f) // Ensure the overlay is beneath markers
+
+    googleMap.addGroundOverlay(groundOverlayOptions)
+}
+
+fun initializeTileMarkers(googleMap: GoogleMap) {
+    // Be careful changing this value -> affects a lot of different stuff
+    val zoomLevel = 5
+    val circleSizeInPixels = 650 // Size of the circle in pixels
+
+    for (x in 0 until 32) {
+        for (y in 0 until 32) {
+            val (lat, lon) = tileToLatLong(x, y, zoomLevel)
+            val location = LatLng(lat, lon)
+
+            // Create a custom marker icon with the circle and Google's default marker icon
+            val customMarkerIcon = createCustomCircleMarker(circleSizeInPixels)
+
+            // Create a Marker with the custom icon
+            val markerOptions = MarkerOptions()
+                .position(location)
+                .icon(BitmapDescriptorFactory.fromBitmap(customMarkerIcon))
+
+            googleMap.addMarker(markerOptions)
         }
     }
+}
+
+fun createCustomCircleMarker(circleSizeInPixels: Int): Bitmap {
+    val bitmap = Bitmap.createBitmap(circleSizeInPixels, circleSizeInPixels, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val paint = Paint().apply {
+        color = android.graphics.Color.BLACK
+        style = Paint.Style.FILL
+    }
+    canvas.drawCircle(
+        circleSizeInPixels / 2f,
+        circleSizeInPixels / 2f,
+        circleSizeInPixels / 2f,
+        paint
+    )
+    return bitmap
+}
+
+
+fun createCircleBitmap(sizeInPixels: Int, x: Int, y: Int): Bitmap {
+    val bitmap = Bitmap.createBitmap(sizeInPixels, sizeInPixels, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val paint = Paint().apply {
+        color = android.graphics.Color.BLACK
+        style = Paint.Style.FILL
+    }
+
+    // Log statements to help with debugging
+    Log.d("CircleBitmap", "Bitmap size: $sizeInPixels x $sizeInPixels")
+    Log.d("CircleBitmap", "Drawn at : $x, $y")
+
+    canvas.drawCircle(sizeInPixels / 2f, sizeInPixels / 2f, sizeInPixels / 2f, paint)
+
+    // Log statement to indicate that circle drawing is completed
+    Log.d("CircleBitmap", "Circle drawn on bitmap")
+
+    return bitmap
+}
+
+fun createTransparentOverlayBitmap(): Bitmap {
+    val size = 1024 // Increase the size if needed
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val paint = Paint().apply {
+        color = android.graphics.Color.argb(100, 0, 0, 0) // Adjust the alpha value for better visibility
+        style = Paint.Style.FILL
+    }
+    canvas.drawRect(0f, 0f, size.toFloat(), size.toFloat(), paint)
+    return bitmap
+}
+
+
+
+fun tileToLatLong(x: Int, y: Int, zoomLevel: Int): Pair<Double, Double> {
+    val n = 2.0.pow(zoomLevel.toDouble())
+    val lonDeg = x / n * 360.0 - 180.0
+    val latRad = atan(sinh(PI * (1 - 2 * y / n)))
+    val latDeg = Math.toDegrees(latRad)
+    return Pair(latDeg, lonDeg)
 }
 @Composable
 fun rememberMapViewWithLifecycle(): MapView {

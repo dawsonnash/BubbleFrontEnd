@@ -54,6 +54,7 @@ class NonUserModel : ViewModel() {
             }
         })
     }
+
     /*
     fun fetchSingleUser(searchQuery: String) {
 
