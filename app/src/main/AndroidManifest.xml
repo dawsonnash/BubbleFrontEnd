@@ -13,7 +13,7 @@
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
-        android:label="welcome_page_label"
+        android:label="Bubble"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.BubbleFrontEnd"
@@ -25,7 +25,7 @@
         <activity
             android:name=".WelcomePage"
             android:exported="true"
-            android:label="Bubble"
+            android:label="welcome_page_label"
             android:theme="@style/Theme.BubbleFrontEnd">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -78,6 +78,11 @@
         <activity
             android:name=".DataPage"
             android:label="data_page_label"
+            android:theme="@style/Theme.BubbleFrontEnd">
+        </activity>
+        <activity
+            android:name=".Omniverse"
+            android:label="omniverse_label"
             android:theme="@style/Theme.BubbleFrontEnd">
         </activity>
 

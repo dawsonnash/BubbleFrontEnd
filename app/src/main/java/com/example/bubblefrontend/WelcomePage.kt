@@ -38,7 +38,7 @@ class WelcomePage : ComponentActivity() {
 
         if (isLoggedIn) {
             // User is logged in, navigate to the GlobalPage
-            val intent = Intent(this, GlobalPage::class.java)
+            val intent = Intent(this, Omniverse::class.java)
             startActivity(intent)
             finish() // Optional: Finish the WelcomePage so the user can't go back to it
         } else {
