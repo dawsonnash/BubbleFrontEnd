@@ -8,6 +8,8 @@
     <string name="settings_page_label">BubbleFrontEnd</string>
     <string name="edit_profile_page_label">BubbleFrontEnd</string>
     <string name="non_user_page_label">BubbleFrontEnd</string>
+    <string name="data_page_label">BubbleFrontEnd</string>
+
 
 
 </resources>

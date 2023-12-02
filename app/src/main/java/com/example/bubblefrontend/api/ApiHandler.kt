@@ -240,7 +240,84 @@ class ApiHandler {
                 }
             })
         }
+    fun getUID(context: Context) {
 
+        // Standard Retrofit instance
+        val retrofit = Retrofit.Builder()
+            .baseUrl("http://54.202.77.126:8080")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        // Using API - always have to make an instance
+        val apiService = retrofit.create(ApiMethods::class.java)
+
+        // Initialize SharedPreferences for profile data
+        val profileSharedPreferences = context.getSharedPreferences("ProfileData", Context.MODE_PRIVATE)
+        val profileEditor = profileSharedPreferences.edit()
+
+        // Access stored token and username from existing "Account Details" in SharedPreferences for server call
+        val accountSharedPreferences = context.getSharedPreferences("AccountDetails", Context.MODE_PRIVATE)
+        val token = accountSharedPreferences.getString("token", "") ?: ""
+        val storedUsername = accountSharedPreferences.getString("username", "")
+
+        // For logging errors
+        Log.d("Debug", "Stored Username: $storedUsername, Token: $token")
+
+        // Begin server call
+        val call = storedUsername?.let { apiService.getProfile("Bearer $token", it) }
+
+        // Response from server. Success or failure logic
+        call?.enqueue(object : Callback<ProfileResponse> {
+            override fun onResponse(call: Call<ProfileResponse>, response: Response<ProfileResponse>) {
+
+                if (response.isSuccessful) {
+
+                    // Stores the JSON response from the server into the ProfileResponse data class
+                    val profileResponse = response.body()
+
+                    // Check if profileResponse is not null, i.e, does the account exist & does it have data
+                    if (profileResponse != null) {
+
+                        // Store the profile data in the "ProfileData" SharedPreferences file
+                        profileEditor.putString("username", profileResponse.username)
+                        profileEditor.putInt("uid", profileResponse.uid)
+                        profileEditor.putString("name", profileResponse.name)
+                        profileEditor.putString("profile_picture", profileResponse.profile_picture)
+                        profileEditor.putBoolean("editable", profileResponse.editable)
+
+                        profileEditor.apply()
+
+                        // Log the profile data for debugging
+                        Log.d("Debug", "Username: ${profileResponse.username}")
+                        Log.d("Debug", "UID: ${profileResponse.uid}")
+                        Log.d("Debug", "Name: ${profileResponse.name}")
+                        Log.d("Debug", "Profile Picture: ${profileResponse.profile_picture}")
+                        Log.d("Debug", "Editable: ${profileResponse.editable}")
+
+                    }
+                } else {
+                    // Handle API doc errors
+                    val errorBody = response.errorBody()?.string()
+                    Log.d("Debug", "Error Body: $errorBody")
+
+                    val errorMessage = when (response.code()) {
+                        404 -> "Account does not exist"
+                        500 -> "Internal Server Error, bruh"
+                        else -> "Unknown error occurred"
+                    }
+                    // If user account not found, automatically logout
+                    if (response.code() == 404)
+                    {
+                        forceLogout(context, accountSharedPreferences)
+                    }
+                }
+            }
+
+            override fun onFailure(call: Call<ProfileResponse>, t: Throwable) {
+                Toast.makeText(context, "Network error, bruh", Toast.LENGTH_LONG).show()
+            }
+        })
+    }
         fun handleEditProfile(newBio: String, newName: String, imageUri: Uri?, context: Context) {
 
             val retrofit = Retrofit.Builder()
@@ -400,7 +477,7 @@ class ApiHandler {
         }
     }
 
-    fun likePost(uid: Int, postID: Int, uiFeedData: UiFeedData, context: Context) {
+    fun likePost(uid: Int, postID: Int, uiFeedData: UiFeedData, feedData: FeedData, context: Context) {
         val retrofit = Retrofit.Builder()
             .baseUrl("http://54.202.77.126:8080")
             .addConverterFactory(GsonConverterFactory.create())
@@ -448,25 +525,28 @@ class ApiHandler {
 
     }
 
-    fun unlikePost(uid: Int, postID: Int, uiFeedData: UiFeedData, context: Context) {
+    fun unlikePost(uid: Int, postID: Int, uiFeedData: UiFeedData, feedData: FeedData, context: Context) {
         val retrofit = Retrofit.Builder()
             .baseUrl("http://54.202.77.126:8080")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
+        Log.d("unLikePost", "Uid: $uid postID: $postID")
+
         val apiService = retrofit.create(ApiMethods::class.java)
 
-        val unlikeRequestBody = UnlikeRequestBody(uid, postID)
-        val call = apiService.unlikePost(unlikeRequestBody)
-        call.enqueue(object : Callback<UnlikeResponse> {
-            override fun onResponse(call: Call<UnlikeResponse>, response: Response<UnlikeResponse>) {
+        val likeRequestBody = LikeRequestBody(uid, postID)
+        val call = apiService.unlikePost(likeRequestBody)
+
+        call.enqueue(object : Callback<LikeResponse> {
+            override fun onResponse(call: Call<LikeResponse>, response: Response<LikeResponse>) {
                 if (response.isSuccessful) {
-                    val unlikeResponse = response.body()
-                    val message = unlikeResponse?.message
+                    val likeResponse = response.body()
+                    val message = likeResponse?.message
 
                     // Update the UiPostModel's state
-                    uiFeedData.likeCount.value = uiFeedData.likeCount.value + 1
-                    uiFeedData.hasLiked.value = 1
+                    uiFeedData.likeCount.value = uiFeedData.likeCount.value - 1
+                    uiFeedData.hasLiked.value = 0
 
                     if (!message.isNullOrEmpty()) {
                         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
@@ -488,14 +568,12 @@ class ApiHandler {
                 }
             }
 
-            override fun onFailure(call: Call<UnlikeResponse>, t: Throwable) {
-                // network failure
+            override fun onFailure(call: Call<LikeResponse>, t: Throwable) {
                 Toast.makeText(context, "Network error", Toast.LENGTH_LONG).show()
             }
         })
 
     }
-
 
     // For when user login info cannot be retrieved
     fun forceLogout(context: Context, accountSharedPreferences: SharedPreferences){

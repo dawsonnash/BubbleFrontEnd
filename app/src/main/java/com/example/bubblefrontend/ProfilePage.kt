@@ -98,6 +98,8 @@ fun ProfileScreen() {
         // UI to display profile
         val profile = profileData.value!!
 
+        // The following sets the background to a specific image
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -105,8 +107,8 @@ fun ProfileScreen() {
             contentAlignment = Alignment.Center
 
         ) {}
-        // The following sets the background to a specific image
-        /*{
+        /*
+        {
             // Set the image as the background
             Image(
                 painter = painterResource(id = R.drawable.bubblebackground01),
@@ -188,9 +190,6 @@ fun ProfileScreen() {
 //                                shape = RoundedCornerShape(4.dp) // Rounded corners
 //                            )
                 )
-                Spacer(modifier = Modifier.weight(1f))
-                EditProfileButton(context)
-
                 Spacer(
                     modifier = Modifier.weight(1f)
                 )

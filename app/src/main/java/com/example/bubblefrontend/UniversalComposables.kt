@@ -19,31 +19,49 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun LogoutButton(context: Context, accountSharedPreferences: SharedPreferences){
+fun LogoutButton(context: Context, accountSharedPreferences: SharedPreferences) {
     val editor = accountSharedPreferences.edit()
+
+    // Bubble-like gradient brush
+    val gradientBrush = Brush.linearGradient(
+        colors = listOf(
+            Color(0xFF856AB8), // Lighter dark purple
+            Color(0xFF5E7AB3), // Lighter dark periwinkle/blue
+            Color(0xFF7897AB)  // Lighter dark blue/grey
+        ),
+        start = Offset(0f, 0f),
+        end = Offset(0f, Float.POSITIVE_INFINITY)
+    )
     Button(
         onClick = {
             // Set isLoggedIn to false
             editor.putBoolean("isLoggedIn", false)
             editor.apply()
 
+            // Navigate to WelcomePage
             val intent = Intent(context, WelcomePage::class.java)
             context.startActivity(intent)
-        }
+        },
+        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(gradientBrush, shape = RoundedCornerShape(32.dp))
+            .padding(8.dp)
     ) {
-        Text("Logout")
-
-
+        Text("Logout", color = Color.White)
     }
 }
 

@@ -65,7 +65,7 @@ data class FeedData(
     val caption: String,
     val timeAgo: String,
     val likeCount: Int,
-    val hasLiked: Int,
+    var hasLiked: Int,
     // var likeCount: MutableState<Int>,
     // var hasLiked: MutableState<Int>,
 
@@ -94,9 +94,6 @@ data class LikeResponse(
     val message: String?,
     val error: String?)
 
-data class UnlikeRequestBody(
+data class FeedBody(
     val uid: Int,
-    val postID: Int)
-data class UnlikeResponse(
-    val message: String?,
-    val error: String?)
+)

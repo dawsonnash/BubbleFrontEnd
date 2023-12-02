@@ -9,8 +9,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -18,6 +20,9 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -49,6 +54,16 @@ fun EditProfileScreen() {
     var newName by remember { mutableStateOf("") }
     var imageURI by remember { mutableStateOf<Uri?>(null) }  // <-- add this line
 
+    // Bubble-like gradient brush
+    val gradientBrush = Brush.linearGradient(
+        colors = listOf(
+            Color(0xFF856AB8), // Lighter dark purple
+            Color(0xFF5E7AB3), // Lighter dark periwinkle/blue
+            Color(0xFF7897AB)  // Lighter dark blue/grey
+        ),
+        start = Offset(0f, 0f),
+        end = Offset(0f, Float.POSITIVE_INFINITY)
+    )
     // Launcher to handle the result from the image picker - like whatever image you choose
     val launcher = rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri: Uri? ->
         // Handle the returned URI (i.e. store it to the state)
@@ -75,17 +90,11 @@ fun EditProfileScreen() {
                 contentDescription = "Back",
                 modifier = Modifier.clickable {
                     // Navigating back to the ProfilePage
-                    val intent = Intent(context, ProfilePage::class.java)
+                    val intent = Intent(context, SettingsPage::class.java)
                     context.startActivity(intent)
                 }
             )
             Text(text = "Edit Profile", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-        }
-
-        Button(onClick = {
-            launcher.launch("image/*")
-        }) {
-            Text("Upload Profile Picture")
         }
 
         OutlinedTextField(
@@ -109,18 +118,37 @@ fun EditProfileScreen() {
                 keyboardType = KeyboardType.Text,
                 imeAction = ImeAction.Done
             ),
-            keyboardActions = KeyboardActions(
-                onDone = {
-                    // Dismiss the keyboard maybe?
-
-                    // Send the bio update request
-                    val apiHandler = ApiHandler()
-                    apiHandler.handleEditProfile(newBio, newName,imageURI, context)
-                }
-            ),
             modifier = Modifier.fillMaxWidth()
         )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(onClick = {
+            launcher.launch("image/*")
+        },
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(gradientBrush, shape = RoundedCornerShape(32.dp))
+                .padding(8.dp)
+        ) {
+            Text("Upload Profile Picture",  color = Color.White)
+        }
+
         Spacer(modifier = Modifier.weight(1f))
+
+        Button(onClick = {
+            val apiHandler = ApiHandler()
+            apiHandler.handleEditProfile(newBio, newName,imageURI, context)},
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(gradientBrush, shape = RoundedCornerShape(16.dp))
+                .padding(8.dp)
+        ) {
+            Text("Save Changes",  color = Color.White)
+        }
+
 
         BottomDashboard()
     }

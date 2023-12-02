@@ -15,6 +15,7 @@ import retrofit2.http.Path
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.http.DELETE
+import retrofit2.http.HTTP
 import retrofit2.http.Multipart
 import retrofit2.http.Query
 
@@ -63,7 +64,8 @@ interface ApiMethods {
     @Headers("Accept: application/json")
     fun getFeed(
         @Query("p") page: Int? = null, // Page number for pagination
-        @Query("ps") pageSize: Int? = null // Page size for pagination
+        @Query("ps") pageSize: Int? = null ,// Page size for pagination
+        //@Body feedBody: FeedBody
     ): Call<List<FeedData>>
 
     @Multipart
@@ -79,10 +81,8 @@ interface ApiMethods {
         @Body likeRequestBody: LikeRequestBody
     ): Call<LikeResponse>
 
-    @DELETE("api/like")
-    fun unlikePost(
-        @Body unlikeRequestBody: UnlikeRequestBody
-    ): Call<UnlikeResponse>
+    @HTTP(method = "DELETE", path = "api/like", hasBody = true)
+    fun unlikePost(@Body likeRequestBody: LikeRequestBody): Call<LikeResponse>
 
 }
 

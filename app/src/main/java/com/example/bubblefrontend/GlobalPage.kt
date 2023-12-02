@@ -103,12 +103,14 @@ class GlobalPage : ComponentActivity() {
         postModel.fetchPosts(page = 1, pageSize = 12)
         nonUserModel.fetchUsers()
 
+
         setContent {
             BubbleFrontEndTheme {
                 GlobalScreen(postModel, nonUserModel) { imagePickerLauncher.launch("image/*") }
             }
         }
     }
+
     companion object {
         var imageUri = mutableStateOf<Uri?>(null)
     }
@@ -236,16 +238,20 @@ fun HeartIcon(post: FeedData, uiFeedData: UiFeedData, apiHandler: ApiHandler, co
     val likeCount by uiFeedData.likeCount
 
 
+    val profileSharedPreferences = context.getSharedPreferences("ProfileData", Context.MODE_PRIVATE)
+    val uid = profileSharedPreferences.getInt("uid", 0)
+
     Icon(
         imageVector = if (hasLiked == 1) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
         contentDescription = if (hasLiked == 1) "Liked" else "Not Liked",
         tint = if (hasLiked == 1) Color.Red else Color.Gray,
         modifier = modifier
             .clickable {
+                // 8 is me (dawson nash)
                 if (hasLiked == 0) {
-                    apiHandler.likePost(post.uid, post.postID, uiFeedData, context)
+                    apiHandler.likePost(uid, post.postID, uiFeedData, post, context)
                 } else {
-                    apiHandler.unlikePost(post.uid, post.postID, uiFeedData, context)
+                    apiHandler.unlikePost(uid, post.postID, uiFeedData, post, context)
                 }
             }
     )
@@ -266,7 +272,7 @@ fun GlobalScreen(postModel: PostModel, nonUserModel: NonUserModel, launchImagePi
     // Instance for all API calls
     val apiHandler = ApiHandler()
 
-
+    apiHandler.getUID(context)
     // For API called posts
     var postList by remember { mutableStateOf(listOf<FeedData>()) }
     // For reactive UI elements
