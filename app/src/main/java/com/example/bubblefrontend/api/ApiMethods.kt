@@ -84,5 +84,8 @@ interface ApiMethods {
     @HTTP(method = "DELETE", path = "api/like", hasBody = true)
     fun unlikePost(@Body likeRequestBody: LikeRequestBody): Call<LikeResponse>
 
+    @HTTP(method = "DELETE", path = "api/posts/delete", hasBody = true)
+    fun deletePost(@Body deletePostBody: DeletePostBody): Call<DeletePostResponse>
+
 }
 

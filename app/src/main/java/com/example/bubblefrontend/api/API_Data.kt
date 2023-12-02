@@ -94,6 +94,8 @@ data class LikeResponse(
     val message: String?,
     val error: String?)
 
-data class FeedBody(
-    val uid: Int,
-)
+data class DeletePostBody(
+    val postID: Int)
+data class DeletePostResponse(
+    val message: String?,
+    val error: String?)

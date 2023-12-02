@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -66,12 +67,8 @@ class UserSearchPage : ComponentActivity() {
 @Composable
 fun UserSearchScreen(userViewModel: NonUserModel){
 
-    val userList = remember { mutableStateOf(listOf<NonUser>()) }
-    LaunchedEffect(key1 = userViewModel) {
-        userViewModel.userList.observeForever { newList ->
-            userList.value = newList
-        }
-    }
+    val userList by userViewModel.userList.observeAsState(initial = emptyList())
+
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -91,7 +88,7 @@ fun UserSearchScreen(userViewModel: NonUserModel){
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ){
-        SearchBar(userList = userList.value)
+        SearchBar(userList)
         BottomDashboard()
     }
 }
@@ -135,7 +132,7 @@ fun SearchBar(userList: List<NonUser>) {
             ) {
                 items(filteredUsers) { user ->
                     // Style that user info is displayed
-                    Text("${user.name} ~ ${user.username}",
+                    Text("${user.name} ~ ${user.username} ` ${user.bio}",
                         style = TextStyle(fontSize = 20.sp),
                         modifier = Modifier
                             .fillMaxWidth()

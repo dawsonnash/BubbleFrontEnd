@@ -15,7 +15,7 @@ class NonUserModel : ViewModel() {
     // Live list to store all users gathered for search query
     val userList = MutableLiveData<List<NonUser>>()
 
-    // LiveData to store a single user
+    // LiveData to store a single user strictly for search term (not in operation)
     private val _singleUser = MutableLiveData<NonUser>()
     val singleUser: LiveData<NonUser> = _singleUser
 

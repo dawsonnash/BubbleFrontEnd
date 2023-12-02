@@ -575,6 +575,51 @@ class ApiHandler {
 
     }
 
+    fun deletePost(postID: Int, context: Context) {
+        val retrofit = Retrofit.Builder()
+            .baseUrl("http://54.202.77.126:8080")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        Log.d("deletePost", "postID: $postID")
+
+        val apiService = retrofit.create(ApiMethods::class.java)
+
+        val deletePostBody = DeletePostBody(postID)
+        val call = apiService.deletePost(deletePostBody)
+
+        call.enqueue(object : Callback<DeletePostResponse> {
+            override fun onResponse(call: Call<DeletePostResponse>, response: Response<DeletePostResponse>) {
+                if (response.isSuccessful) {
+                    val deletePostResponse = response.body()
+                    val message = deletePostResponse?.message
+
+                    if (!message.isNullOrEmpty()) {
+                        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                    }
+                } else {
+                    // Handle error codes based on API doc
+                    when (response.code()) {
+                        200 -> {
+                            Toast.makeText(context, "You deleted a post!", Toast.LENGTH_LONG).show()
+                        }
+                        500 -> {
+                            Toast.makeText(context, "Post could not be deleted", Toast.LENGTH_LONG).show()
+                        }
+                        else -> {
+                            // Unknown errors
+                            Toast.makeText(context, "Unknown error", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }
+            }
+
+            override fun onFailure(call: Call<DeletePostResponse>, t: Throwable) {
+                Toast.makeText(context, "Network error", Toast.LENGTH_LONG).show()
+            }
+        })
+
+    }
     // For when user login info cannot be retrieved
     fun forceLogout(context: Context, accountSharedPreferences: SharedPreferences){
         val editor = accountSharedPreferences.edit()
