@@ -4,6 +4,7 @@ package com.example.bubblefrontend
 
 import android.content.Context
 import android.content.Intent
+import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Paint
@@ -104,8 +105,10 @@ import com.google.android.gms.maps.model.VisibleRegion
 import com.google.gson.Gson
 import kotlinx.coroutines.delay
 import android.graphics.Canvas
+import android.graphics.Typeface
 import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.model.LatLngBounds
+import com.google.android.gms.maps.model.MapStyleOptions
 import kotlin.math.PI
 import kotlin.math.atan
 import kotlin.math.cos
@@ -125,8 +128,7 @@ class Omniverse : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-/*
-        // Instantiating post model
+
         postModel = ViewModelProvider(this)[PostModel::class.java]
         postModel.toastMessage.observe(this) { message ->
             Toast.makeText(this, message, Toast.LENGTH_LONG).show()
@@ -140,7 +142,6 @@ class Omniverse : ComponentActivity() {
         postModel.fetchPosts(page = 1, pageSize = 12)
         nonUserModel.fetchUsers()
 
-*/
         setContent {
             BubbleFrontEndTheme {
                 OmniverseScreen()
@@ -179,13 +180,13 @@ fun MapViewContainer(
     tileCoordinates: Pair<Int, Int>?,
     updateTileCoordinates: (Pair<Int, Int>) -> Unit
 ) {
+    val context = LocalContext.current
+
     AndroidView({ mapView }) { mapView ->
         mapView.getMapAsync { googleMap ->
-            googleMap.mapType = GoogleMap.MAP_TYPE_NORMAL
+            // This is not worked out -> creates a blank map template
+          // setCustomMapStyle(googleMap, context)
             googleMap.moveCamera(CameraUpdateFactory.zoomTo(5.0f))
-
-            // Add the semi-transparent overlay here
-            addMapOverlay(googleMap)
 
             // Initialize markers for each tile
             initializeTileMarkers(googleMap)
@@ -200,18 +201,22 @@ fun MapViewContainer(
         }
     }
 }
-fun addMapOverlay(googleMap: GoogleMap) {
-    val overlaySize = LatLngBounds(LatLng(-85.0, -180.0), LatLng(85.0, 180.0)) // World size
-    val overlayBitmap = createTransparentOverlayBitmap()
 
-    val groundOverlayOptions = GroundOverlayOptions()
-        .image(BitmapDescriptorFactory.fromBitmap(overlayBitmap))
-        .positionFromBounds(overlaySize)
-        .transparency(0f) // Adjust transparency if needed
-        .zIndex(-1f) // Ensure the overlay is beneath markers
-
-    googleMap.addGroundOverlay(groundOverlayOptions)
+fun setCustomMapStyle(googleMap: GoogleMap, context: Context) {
+    try {
+        val success = googleMap.setMapStyle(
+            MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style)
+        )
+        if (!success) {
+            Log.e("MapsActivity", "Style parsing failed.")
+        } else {
+            Log.d("MapsActivity", "Style applied successfully.")
+        }
+    } catch (e: Exception) {
+        Log.e("MapsActivity", "Error setting map style", e)
+    }
 }
+
 
 fun initializeTileMarkers(googleMap: GoogleMap) {
     // Be careful changing this value -> affects a lot of different stuff
@@ -239,49 +244,34 @@ fun initializeTileMarkers(googleMap: GoogleMap) {
 fun createCustomCircleMarker(circleSizeInPixels: Int): Bitmap {
     val bitmap = Bitmap.createBitmap(circleSizeInPixels, circleSizeInPixels, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
-    val paint = Paint().apply {
-        color = android.graphics.Color.BLACK
-        style = Paint.Style.FILL
-    }
-    canvas.drawCircle(
-        circleSizeInPixels / 2f,
-        circleSizeInPixels / 2f,
-        circleSizeInPixels / 2f,
-        paint
-    )
-    return bitmap
-}
 
-
-fun createCircleBitmap(sizeInPixels: Int, x: Int, y: Int): Bitmap {
-    val bitmap = Bitmap.createBitmap(sizeInPixels, sizeInPixels, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(bitmap)
-    val paint = Paint().apply {
-        color = android.graphics.Color.BLACK
+    // Paint for the circle
+    val circlePaint = Paint().apply {
+        color = android.graphics.Color.BLACK // Circle color
         style = Paint.Style.FILL
     }
 
-    // Log statements to help with debugging
-    Log.d("CircleBitmap", "Bitmap size: $sizeInPixels x $sizeInPixels")
-    Log.d("CircleBitmap", "Drawn at : $x, $y")
+    // Draw the circle
+    canvas.drawCircle(circleSizeInPixels / 2f, circleSizeInPixels / 2f, circleSizeInPixels / 2f, circlePaint)
 
-    canvas.drawCircle(sizeInPixels / 2f, sizeInPixels / 2f, sizeInPixels / 2f, paint)
+    // Text to be drawn on the circle
+    val text = "Text"
 
-    // Log statement to indicate that circle drawing is completed
-    Log.d("CircleBitmap", "Circle drawn on bitmap")
-
-    return bitmap
-}
-
-fun createTransparentOverlayBitmap(): Bitmap {
-    val size = 1024 // Increase the size if needed
-    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(bitmap)
-    val paint = Paint().apply {
-        color = android.graphics.Color.argb(100, 0, 0, 0) // Adjust the alpha value for better visibility
-        style = Paint.Style.FILL
+    // Paint for the text
+    val textPaint = Paint().apply {
+        color = android.graphics.Color.WHITE // Set the text color
+        textAlign = Paint.Align.CENTER
+        textSize = circleSizeInPixels / 5f // Set the text size relative to the circle size
+        typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD) // Make text bold
     }
-    canvas.drawRect(0f, 0f, size.toFloat(), size.toFloat(), paint)
+
+    // Calculate the position for the text to be centered
+    val xPos = circleSizeInPixels / 2f
+    val yPos = (circleSizeInPixels / 2f - (textPaint.descent() + textPaint.ascent()) / 2)
+
+    // Draw the text
+    canvas.drawText(text, xPos, yPos, textPaint)
+
     return bitmap
 }
 

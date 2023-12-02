@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+
 }
 
 android {
@@ -88,6 +89,7 @@ dependencies {
     implementation ("io.coil-kt:coil-compose:1.4.0")
     implementation ("androidx.compose.runtime:runtime-livedata")
     implementation("androidx.work:work-runtime-ktx:$workVersion")
+
 
 
 }

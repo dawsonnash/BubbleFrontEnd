@@ -7,6 +7,7 @@
 
     <!-- Make sure to remove ClearTextTraffic unless we get https - allows HTTP traffic-->
     <!-- Application label should be different than welcome page -->
+    <!-- Dawson's Google Maps API key: AIzaSyDxfd9swUK7XIk0LrDf91H1gJSnKfRrbdE -->
 
     <application
         android:allowBackup="true"
