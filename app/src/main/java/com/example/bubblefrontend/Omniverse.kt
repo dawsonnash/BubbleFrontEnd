@@ -119,41 +119,42 @@ import kotlin.math.tan
 
 // Test post data
 data class Post(
+    val id: Int,
     val username: String,
-    val caption: String
-)
+    val content: String)
+
 val posts = arrayOf(
-    Post("user1", "Beautiful day at the beach!"),
-    Post("adventureSeeker", "Just climbed the highest mountain!"),
-    Post("natureLover", "The beauty of nature is endless."),
-    Post("cityExplorer", "Exploring the city lights."),
-    Post("foodie", "Tried the best pizza in town today."),
-    Post("travelGuru", "Another country checked off my list!"),
-    Post("fitnessFanatic", "Great workout today!"),
-    Post("peacefulWanderer", "Found a quiet spot for meditation."),
-    Post("artisticSoul", "Visited an amazing art gallery."),
-    Post("techGeek", "Attended a cool tech conference."),
-    Post("gamerLife", "Won my first gaming tournament!"),
-    Post("bookworm", "Finished an incredible novel."),
-    Post("musicFan", "Went to an awesome concert."),
-    Post("movieBuff", "Saw the latest blockbuster."),
-    Post("fashionista", "Found the perfect dress for summer."),
-    Post("historyBuff", "Explored an ancient castle."),
-    Post("animalLover", "Volunteered at an animal shelter."),
-    Post("gardeningGuru", "My garden is in full bloom!"),
-    Post("comedyKing", "Attended a hilarious stand-up show."),
-    Post("scienceNerd", "Conducted a fascinating experiment."),
-    Post("spaceEnthusiast", "Watched a documentary about Mars."),
-    Post("beachBum", "Surfing waves all day."),
-    Post("diyMaster", "Built my first piece of furniture."),
-    Post("roadTripper", "Started a cross-country journey."),
-    Post("dancingQueen", "Took a salsa dancing class."),
-    Post("poetryLover", "Wrote a poem about spring."),
-    Post("photographyFan", "Captured a stunning sunset."),
-    Post("fitnessCoach", "Helped someone achieve their goal."),
-    Post("chefInTraining", "Cooked a three-course meal."),
-    Post("languageLearner", "Started learning a new language."),
-    Post("stargazer", "Saw a shooting star last night.")
+    Post(1,"user1", "Beautiful day at the beach!"),
+    Post(2, "adventureSeeker", "Just climbed the highest mountain!"),
+    Post(3, "natureLover", "The beauty of nature is endless."),
+    Post(4, "cityExplorer", "Exploring the city lights."),
+    Post(5, "foodie", "Tried the best pizza in town today."),
+    Post(6,"travelGuru", "Another country checked off my list!"),
+    Post(7, "fitnessFanatic", "Great workout today!"),
+    Post(8, "peacefulWanderer", "Found a quiet spot for meditation."),
+    Post(9, "artisticSoul", "Visited an amazing art gallery."),
+    Post(10, "techGeek", "Attended a cool tech conference."),
+    Post(11, "gamerLife", "Won my first gaming tournament!"),
+    Post(12, "bookworm", "Finished an incredible novel."),
+    Post(13, "musicFan", "Went to an awesome concert."),
+    Post(14, "movieBuff", "Saw the latest blockbuster."),
+    Post(15, "fashionista", "Found the perfect dress for summer."),
+    Post(16, "historyBuff", "Explored an ancient castle."),
+    Post(17, "animalLover", "Volunteered at an animal shelter."),
+    Post(18, "gardeningGuru", "My garden is in full bloom!"),
+    Post(19, "comedyKing", "Attended a hilarious stand-up show."),
+    Post(20, "scienceNerd", "Conducted a fascinating experiment."),
+    Post(21, "spaceEnthusiast", "Watched a documentary about Mars."),
+    Post(22, "beachBum", "Surfing waves all day."),
+    Post(23, "diyMaster", "Built my first piece of furniture."),
+    Post(24, "roadTripper", "Started a cross-country journey."),
+    Post(25, "dancingQueen", "Took a salsa dancing class."),
+    Post(26, "poetryLover", "Wrote a poem about spring."),
+    Post(27, "photographyFan", "Captured a stunning sunset."),
+    Post(28, "fitnessCoach", "Helped someone achieve their goal."),
+    Post(29, "chefInTraining", "Cooked a three-course meal."),
+    Post(30, "languageLearner", "Started learning a new language."),
+    Post(31, "stargazer", "Saw a shooting star last night.")
 )
 
 
@@ -249,29 +250,34 @@ fun MapViewContainer(
 }
 
 val postTileMap = mutableMapOf<Pair<Int, Int>, Post>()
-
+var postIndex = 0
 fun populateGrid(googleMap: GoogleMap, posts: Array<Post>, currentX: Int, currentY: Int) {
     val zoomLevel = 5
     val circleSizeInPixels = 650 // Size of the circle in pixels
 
-    // A counter to keep track of how many posts have been placed
-    var postIndex = 0
 
     for (i in -1..1) {
         for (j in -1..1) {
             val x = currentX + i
             val y = currentY + j
+            val tileKey = Pair(x, y)
 
             val (lat, lon) = tileToLatLong(x, y, zoomLevel)
             val location = LatLng(lat, lon)
 
-            // Determine the correct bubble marker
-            var bubbleMarker =  blankBubble(googleMap, circleSizeInPixels, x, y)
+            val bubbleMarker: Bitmap = when {
+                // Use testBubble for tiles that already have a post
+                postTileMap.containsKey(tileKey) -> testBubble(circleSizeInPixels, postTileMap[tileKey]!!)
 
-            if (postIndex < posts.size) {
-                val post = posts[postIndex]
-                bubbleMarker = testBubble(circleSizeInPixels, post)
+                // Assign a new post to this tile and use testBubble
+                postIndex < posts.size -> {
+                    val post = posts[postIndex++]
+                    postTileMap[tileKey] = post
+                    testBubble(circleSizeInPixels, post)
+                }
 
+                // Use blankBubble for tiles without a post
+                else -> blankBubble(circleSizeInPixels, x, y)
             }
 
             val markerOptions = MarkerOptions()
@@ -279,16 +285,11 @@ fun populateGrid(googleMap: GoogleMap, posts: Array<Post>, currentX: Int, curren
                 .icon(BitmapDescriptorFactory.fromBitmap(bubbleMarker))
 
             googleMap.addMarker(markerOptions)
-
-            // Increment the postIndex if we used a post
-            if (postIndex < posts.size) {
-                postIndex++
-            }
         }
     }
 }
 
-fun blankBubble(googleMap: GoogleMap, circleSizeInPixels: Int, tileX: Int, tileY: Int): Bitmap {
+fun blankBubble(circleSizeInPixels: Int, tileX: Int, tileY: Int): Bitmap {
     val bitmap = Bitmap.createBitmap(circleSizeInPixels, circleSizeInPixels, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
 
@@ -308,7 +309,7 @@ fun blankBubble(googleMap: GoogleMap, circleSizeInPixels: Int, tileX: Int, tileY
     val textPaint = Paint().apply {
         color = android.graphics.Color.WHITE // Set the text color
         textAlign = Paint.Align.CENTER
-        textSize = circleSizeInPixels / 5f // Set the text size relative to the circle size
+        textSize = circleSizeInPixels / 12f // Set the text size relative to the circle size
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD) // Make text bold
     }
 
@@ -317,7 +318,8 @@ fun blankBubble(googleMap: GoogleMap, circleSizeInPixels: Int, tileX: Int, tileY
     val yPos = (circleSizeInPixels / 2f - (textPaint.descent() + textPaint.ascent()) / 2)
 
     // Draw the text
-    canvas.drawText(text, xPos, yPos, textPaint)
+   // canvas.drawText(text, xPos, yPos, textPaint)
+    canvas.drawText("No more content :(", xPos, yPos, textPaint)
 
     return bitmap
 }
@@ -335,7 +337,7 @@ fun testBubble(circleSizeInPixels: Int, post: Post): Bitmap {
     canvas.drawCircle(circleSizeInPixels / 2f, circleSizeInPixels / 2f, circleSizeInPixels / 2f, circlePaint)
 
     // Text to be drawn on the circle
-    val text = post.username
+    val text = post.id.toString()
 
     // Paint for the text
     val textPaint = Paint().apply {
