@@ -143,8 +143,9 @@ class Omniverse : ComponentActivity() {
         nonUserModel.fetchUsers()
 
         setContent {
+            val posts by postModel.postList.observeAsState(initial = listOf())
             BubbleFrontEndTheme {
-                OmniverseScreen()
+                OmniverseScreen(posts)
             }
         }
     }
@@ -152,12 +153,12 @@ class Omniverse : ComponentActivity() {
 }
 
 @Composable
-fun OmniverseScreen() {
+fun OmniverseScreen(posts: List<FeedData>) {
     val mapView = rememberMapViewWithLifecycle()
     var tileCoordinates by remember { mutableStateOf<Pair<Int, Int>?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        MapViewContainer(mapView, tileCoordinates ){ newTileCoordinates ->
+        MapViewContainer(mapView, tileCoordinates, posts){ newTileCoordinates ->
             tileCoordinates = newTileCoordinates
         }
 
@@ -178,6 +179,7 @@ fun OmniverseScreen() {
 fun MapViewContainer(
     mapView: MapView,
     tileCoordinates: Pair<Int, Int>?,
+    posts: List<FeedData>,
     updateTileCoordinates: (Pair<Int, Int>) -> Unit
 ) {
     val context = LocalContext.current
@@ -189,7 +191,7 @@ fun MapViewContainer(
             googleMap.moveCamera(CameraUpdateFactory.zoomTo(5.0f))
 
             // Initialize markers for each tile
-            initializeTileMarkers(googleMap)
+            initializeTileMarkers(googleMap, posts)
             googleMap.setOnCameraIdleListener {
                 val centerLat = googleMap.cameraPosition.target.latitude
                 val centerLon = googleMap.cameraPosition.target.longitude
@@ -218,30 +220,37 @@ fun setCustomMapStyle(googleMap: GoogleMap, context: Context) {
 }
 
 
-fun initializeTileMarkers(googleMap: GoogleMap) {
-    // Be careful changing this value -> affects a lot of different stuff
-    val zoomLevel = 5
-    val circleSizeInPixels = 650 // Size of the circle in pixels
+fun initializeTileMarkers(googleMap: GoogleMap, posts: List<FeedData>) {
+    val gridSize = 32
+    val circleSizeInPixels = 650
 
-    for (x in 0 until 32) {
-        for (y in 0 until 32) {
-            val (lat, lon) = tileToLatLong(x, y, zoomLevel)
-            val location = LatLng(lat, lon)
+    // Latitude ranges from -90 to 90, Longitude ranges from -180 to 180
+    val latStep = 180.0 / gridSize // Step size for latitude
+    val lonStep = 360.0 / gridSize // Step size for longitude
 
-            // Create a custom marker icon with the circle and Google's default marker icon
-            val customMarkerIcon = createCustomCircleMarker(circleSizeInPixels)
+    for (i in posts.indices) {
+        val x = i % gridSize  // x-coordinate in the grid
+        val y = i / gridSize  // y-coordinate in the grid
 
-            // Create a Marker with the custom icon
-            val markerOptions = MarkerOptions()
-                .position(location)
-                .icon(BitmapDescriptorFactory.fromBitmap(customMarkerIcon))
+        // Calculate latitude and longitude
+        val lat = 90 - (y * latStep) - latStep / 2  // Centering the marker in the tile
+        val lon = -180 + (x * lonStep) + lonStep / 2  // Centering the marker in the tile
 
-            googleMap.addMarker(markerOptions)
-        }
+        val location = LatLng(lat, lon)
+        val post = posts[i]
+        val markerIcon = createCustomCircleMarker(circleSizeInPixels, post) // Assuming you want to use the post's title
+
+        val markerOptions = MarkerOptions()
+            .position(location)
+            .icon(BitmapDescriptorFactory.fromBitmap(markerIcon))
+
+        googleMap.addMarker(markerOptions)
     }
 }
 
-fun createCustomCircleMarker(circleSizeInPixels: Int): Bitmap {
+
+
+fun createCustomCircleMarker(circleSizeInPixels: Int, post: FeedData): Bitmap {
     val bitmap = Bitmap.createBitmap(circleSizeInPixels, circleSizeInPixels, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
 
@@ -255,7 +264,8 @@ fun createCustomCircleMarker(circleSizeInPixels: Int): Bitmap {
     canvas.drawCircle(circleSizeInPixels / 2f, circleSizeInPixels / 2f, circleSizeInPixels / 2f, circlePaint)
 
     // Text to be drawn on the circle
-    val text = "Text"
+    val text = post.caption
+    Log.d("Post", "Caption: $text")
 
     // Paint for the text
     val textPaint = Paint().apply {
