@@ -167,7 +167,7 @@ class Omniverse : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        /*
+
                 // Instantiating post model
                 postModel = ViewModelProvider(this)[PostModel::class.java]
                 postModel.toastMessage.observe(this) { message ->
@@ -179,11 +179,12 @@ class Omniverse : ComponentActivity() {
                     Toast.makeText(this, message, Toast.LENGTH_LONG).show()
                 }
                 // Default values for page and pageSize
-                postModel.fetchPosts(page = 1, pageSize = 12)
+                postModel.fetchPosts(page = 1, pageSize = 20)
                 nonUserModel.fetchUsers()
 
-        */
+
         setContent {
+            val posts by postModel.postList.observeAsState(initial = listOf())
             BubbleFrontEndTheme {
                 OmniverseScreen(posts)
             }
@@ -193,7 +194,7 @@ class Omniverse : ComponentActivity() {
 }
 
 @Composable
-fun OmniverseScreen(posts: Array<Post>) {
+fun OmniverseScreen(posts: List<FeedData>) {
     val mapView = rememberMapViewWithLifecycle()
     var tileCoordinates by remember { mutableStateOf<Pair<Int, Int>?>(null) }
 
@@ -217,7 +218,7 @@ fun OmniverseScreen(posts: Array<Post>) {
 
 @Composable
 fun MapViewContainer(
-    posts: Array<Post>,
+    posts: List<FeedData>,
     mapView: MapView,
     tileCoordinates: Pair<Int, Int>?,
     updateTileCoordinates: (Pair<Int, Int>) -> Unit
@@ -249,9 +250,10 @@ fun MapViewContainer(
     }
 }
 
-val postTileMap = mutableMapOf<Pair<Int, Int>, Post>()
+// The tile map is responsible for determining if a post is at a specific tile coordinate
+val postTileMap = mutableMapOf<Pair<Int, Int>, FeedData>()
 var postIndex = 0
-fun populateGrid(googleMap: GoogleMap, posts: Array<Post>, currentX: Int, currentY: Int) {
+fun populateGrid(googleMap: GoogleMap,  posts: List<FeedData>, currentX: Int, currentY: Int) {
     val zoomLevel = 5
     val circleSizeInPixels = 650 // Size of the circle in pixels
 
@@ -323,7 +325,7 @@ fun blankBubble(circleSizeInPixels: Int, tileX: Int, tileY: Int): Bitmap {
 
     return bitmap
 }
-fun testBubble(circleSizeInPixels: Int, post: Post): Bitmap {
+fun testBubble(circleSizeInPixels: Int, post: FeedData): Bitmap {
     val bitmap = Bitmap.createBitmap(circleSizeInPixels, circleSizeInPixels, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
 
@@ -337,13 +339,13 @@ fun testBubble(circleSizeInPixels: Int, post: Post): Bitmap {
     canvas.drawCircle(circleSizeInPixels / 2f, circleSizeInPixels / 2f, circleSizeInPixels / 2f, circlePaint)
 
     // Text to be drawn on the circle
-    val text = post.id.toString()
+    val text = post.caption.toString()
 
     // Paint for the text
     val textPaint = Paint().apply {
         color = android.graphics.Color.WHITE // Set the text color
         textAlign = Paint.Align.CENTER
-        textSize = circleSizeInPixels / 12f // Set the text size relative to the circle size
+        textSize = circleSizeInPixels / 20f // Set the text size relative to the circle size
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD) // Make text bold
     }
 
@@ -356,29 +358,6 @@ fun testBubble(circleSizeInPixels: Int, post: Post): Bitmap {
 
     return bitmap
 }
-
-fun createCircleBitmap(sizeInPixels: Int, x: Int, y: Int): Bitmap {
-    val bitmap = Bitmap.createBitmap(sizeInPixels, sizeInPixels, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(bitmap)
-    val paint = Paint().apply {
-        color = android.graphics.Color.BLACK
-        style = Paint.Style.FILL
-    }
-
-
-    // Log statements to help with debugging
-    Log.d("CircleBitmap", "Bitmap size: $sizeInPixels x $sizeInPixels")
-    Log.d("CircleBitmap", "Drawn at : $x, $y")
-
-    canvas.drawCircle(sizeInPixels / 2f, sizeInPixels / 2f, sizeInPixels / 2f, paint)
-
-    // Log statement to indicate that circle drawing is completed
-    Log.d("CircleBitmap", "Circle drawn on bitmap")
-
-    return bitmap
-}
-
-
 
 fun tileToLatLong(x: Int, y: Int, zoomLevel: Int): Pair<Double, Double> {
     val n = 2.0.pow(zoomLevel.toDouble())
