@@ -4,7 +4,6 @@ package com.example.bubblefrontend
 
 import android.content.Context
 import android.content.Intent
-import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Paint
@@ -108,7 +107,6 @@ import android.graphics.Canvas
 import android.graphics.Typeface
 import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.model.LatLngBounds
-import com.google.android.gms.maps.model.MapStyleOptions
 import kotlin.math.PI
 import kotlin.math.atan
 import kotlin.math.cos
@@ -119,6 +117,46 @@ import kotlin.math.sinh
 import kotlin.math.sqrt
 import kotlin.math.tan
 
+// Test post data
+data class Post(
+    val username: String,
+    val caption: String
+)
+val posts = arrayOf(
+    Post("user1", "Beautiful day at the beach!"),
+    Post("adventureSeeker", "Just climbed the highest mountain!"),
+    Post("natureLover", "The beauty of nature is endless."),
+    Post("cityExplorer", "Exploring the city lights."),
+    Post("foodie", "Tried the best pizza in town today."),
+    Post("travelGuru", "Another country checked off my list!"),
+    Post("fitnessFanatic", "Great workout today!"),
+    Post("peacefulWanderer", "Found a quiet spot for meditation."),
+    Post("artisticSoul", "Visited an amazing art gallery."),
+    Post("techGeek", "Attended a cool tech conference."),
+    Post("gamerLife", "Won my first gaming tournament!"),
+    Post("bookworm", "Finished an incredible novel."),
+    Post("musicFan", "Went to an awesome concert."),
+    Post("movieBuff", "Saw the latest blockbuster."),
+    Post("fashionista", "Found the perfect dress for summer."),
+    Post("historyBuff", "Explored an ancient castle."),
+    Post("animalLover", "Volunteered at an animal shelter."),
+    Post("gardeningGuru", "My garden is in full bloom!"),
+    Post("comedyKing", "Attended a hilarious stand-up show."),
+    Post("scienceNerd", "Conducted a fascinating experiment."),
+    Post("spaceEnthusiast", "Watched a documentary about Mars."),
+    Post("beachBum", "Surfing waves all day."),
+    Post("diyMaster", "Built my first piece of furniture."),
+    Post("roadTripper", "Started a cross-country journey."),
+    Post("dancingQueen", "Took a salsa dancing class."),
+    Post("poetryLover", "Wrote a poem about spring."),
+    Post("photographyFan", "Captured a stunning sunset."),
+    Post("fitnessCoach", "Helped someone achieve their goal."),
+    Post("chefInTraining", "Cooked a three-course meal."),
+    Post("languageLearner", "Started learning a new language."),
+    Post("stargazer", "Saw a shooting star last night.")
+)
+
+
 class Omniverse : ComponentActivity() {
     private lateinit var imagePickerLauncher: ActivityResultLauncher<String>
 
@@ -128,22 +166,23 @@ class Omniverse : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        /*
+                // Instantiating post model
+                postModel = ViewModelProvider(this)[PostModel::class.java]
+                postModel.toastMessage.observe(this) { message ->
+                    Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+                }
+                // Instantiating nonUserModel
+                nonUserModel = ViewModelProvider(this)[NonUserModel::class.java]
+                nonUserModel.toastMessage.observe(this) { message ->
+                    Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+                }
+                // Default values for page and pageSize
+                postModel.fetchPosts(page = 1, pageSize = 12)
+                nonUserModel.fetchUsers()
 
-        postModel = ViewModelProvider(this)[PostModel::class.java]
-        postModel.toastMessage.observe(this) { message ->
-            Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-        }
-        // Instantiating nonUserModel
-        nonUserModel = ViewModelProvider(this)[NonUserModel::class.java]
-        nonUserModel.toastMessage.observe(this) { message ->
-            Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-        }
-        // Default values for page and pageSize
-        postModel.fetchPosts(page = 1, pageSize = 12)
-        nonUserModel.fetchUsers()
-
+        */
         setContent {
-            val posts by postModel.postList.observeAsState(initial = listOf())
             BubbleFrontEndTheme {
                 OmniverseScreen(posts)
             }
@@ -153,12 +192,12 @@ class Omniverse : ComponentActivity() {
 }
 
 @Composable
-fun OmniverseScreen(posts: List<FeedData>) {
+fun OmniverseScreen(posts: Array<Post>) {
     val mapView = rememberMapViewWithLifecycle()
     var tileCoordinates by remember { mutableStateOf<Pair<Int, Int>?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        MapViewContainer(mapView, tileCoordinates, posts){ newTileCoordinates ->
+        MapViewContainer(posts, mapView, tileCoordinates ){ newTileCoordinates ->
             tileCoordinates = newTileCoordinates
         }
 
@@ -176,19 +215,18 @@ fun OmniverseScreen(posts: List<FeedData>) {
 }
 
 @Composable
-fun MapViewContainer(
+fun MapViewContainer(posts: Array<Post>,
     mapView: MapView,
     tileCoordinates: Pair<Int, Int>?,
-    posts: List<FeedData>,
     updateTileCoordinates: (Pair<Int, Int>) -> Unit
 ) {
-    val context = LocalContext.current
-
     AndroidView({ mapView }) { mapView ->
         mapView.getMapAsync { googleMap ->
-            // This is not worked out -> creates a blank map template
-          // setCustomMapStyle(googleMap, context)
+            googleMap.mapType = GoogleMap.MAP_TYPE_NORMAL
             googleMap.moveCamera(CameraUpdateFactory.zoomTo(5.0f))
+
+            // Add the semi-transparent overlay here
+            addMapOverlay(googleMap)
 
             // Initialize markers for each tile
             initializeTileMarkers(googleMap, posts)
@@ -203,85 +241,104 @@ fun MapViewContainer(
         }
     }
 }
+fun addMapOverlay(googleMap: GoogleMap) {
+    val overlaySize = LatLngBounds(LatLng(-85.0, -180.0), LatLng(85.0, 180.0)) // World size
+    val overlayBitmap = createTransparentOverlayBitmap()
 
-fun setCustomMapStyle(googleMap: GoogleMap, context: Context) {
-    try {
-        val success = googleMap.setMapStyle(
-            MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style)
-        )
-        if (!success) {
-            Log.e("MapsActivity", "Style parsing failed.")
-        } else {
-            Log.d("MapsActivity", "Style applied successfully.")
+    val groundOverlayOptions = GroundOverlayOptions()
+        .image(BitmapDescriptorFactory.fromBitmap(overlayBitmap))
+        .positionFromBounds(overlaySize)
+        .transparency(0f) // Adjust transparency if needed
+        .zIndex(-1f) // Ensure the overlay is beneath markers
+
+    googleMap.addGroundOverlay(groundOverlayOptions)
+}
+
+fun initializeTileMarkers(googleMap: GoogleMap, posts: Array<Post>) {
+    // Be careful changing this value -> affects a lot of different stuff
+    val zoomLevel = 5
+    val circleSizeInPixels = 650 // Size of the circle in pixels
+
+    for (x in 0 until 32) {
+        for (y in 0 until 32) {
+            val (lat, lon) = tileToLatLong(x, y, zoomLevel)
+            val location = LatLng(lat, lon)
+
+            // Create a custom marker icon with the circle and Google's default marker icon
+            val customMarkerIcon = createCustomCircleMarker(circleSizeInPixels, x, y)
+
+            // Create a Marker with the custom icon
+            val markerOptions = MarkerOptions()
+                .position(location)
+                .icon(BitmapDescriptorFactory.fromBitmap(customMarkerIcon))
+
+            googleMap.addMarker(markerOptions)
         }
-    } catch (e: Exception) {
-        Log.e("MapsActivity", "Error setting map style", e)
     }
 }
 
-
-fun initializeTileMarkers(googleMap: GoogleMap, posts: List<FeedData>) {
-    val gridSize = 32
-    val circleSizeInPixels = 650
-
-    // Latitude ranges from -90 to 90, Longitude ranges from -180 to 180
-    val latStep = 180.0 / gridSize // Step size for latitude
-    val lonStep = 360.0 / gridSize // Step size for longitude
-
-    for (i in posts.indices) {
-        val x = i % gridSize  // x-coordinate in the grid
-        val y = i / gridSize  // y-coordinate in the grid
-
-        // Calculate latitude and longitude
-        val lat = 90 - (y * latStep) - latStep / 2  // Centering the marker in the tile
-        val lon = -180 + (x * lonStep) + lonStep / 2  // Centering the marker in the tile
-
-        val location = LatLng(lat, lon)
-        val post = posts[i]
-        val markerIcon = createCustomCircleMarker(circleSizeInPixels, post) // Assuming you want to use the post's title
-
-        val markerOptions = MarkerOptions()
-            .position(location)
-            .icon(BitmapDescriptorFactory.fromBitmap(markerIcon))
-
-        googleMap.addMarker(markerOptions)
-    }
-}
-
-
-
-fun createCustomCircleMarker(circleSizeInPixels: Int, post: FeedData): Bitmap {
+fun createCustomCircleMarker(circleSizeInPixels: Int, tileX: Int, tileY: Int): Bitmap {
     val bitmap = Bitmap.createBitmap(circleSizeInPixels, circleSizeInPixels, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
-
-    // Paint for the circle
-    val circlePaint = Paint().apply {
-        color = android.graphics.Color.BLACK // Circle color
+    val paint = Paint().apply {
+        color = android.graphics.Color.BLACK
         style = Paint.Style.FILL
     }
-
-    // Draw the circle
-    canvas.drawCircle(circleSizeInPixels / 2f, circleSizeInPixels / 2f, circleSizeInPixels / 2f, circlePaint)
-
-    // Text to be drawn on the circle
-    val text = post.caption
-    Log.d("Post", "Caption: $text")
+    canvas.drawCircle(
+        circleSizeInPixels / 2f,
+        circleSizeInPixels / 2f,
+        circleSizeInPixels / 2f,
+        paint
+    )
 
     // Paint for the text
     val textPaint = Paint().apply {
-        color = android.graphics.Color.WHITE // Set the text color
+        color = android.graphics.Color.WHITE // Text color
         textAlign = Paint.Align.CENTER
-        textSize = circleSizeInPixels / 5f // Set the text size relative to the circle size
-        typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD) // Make text bold
+        textSize = circleSizeInPixels / 5f // Set text size relative to circle size
+        typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }
 
-    // Calculate the position for the text to be centered
+    // Calculate position for the text (to be centered in the circle)
     val xPos = circleSizeInPixels / 2f
     val yPos = (circleSizeInPixels / 2f - (textPaint.descent() + textPaint.ascent()) / 2)
 
     // Draw the text
-    canvas.drawText(text, xPos, yPos, textPaint)
+    canvas.drawText("$tileX, $tileY", xPos, yPos, textPaint)
+    return bitmap
+}
 
+
+fun createCircleBitmap(sizeInPixels: Int, x: Int, y: Int): Bitmap {
+    val bitmap = Bitmap.createBitmap(sizeInPixels, sizeInPixels, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val paint = Paint().apply {
+        color = android.graphics.Color.BLACK
+        style = Paint.Style.FILL
+    }
+
+
+    // Log statements to help with debugging
+    Log.d("CircleBitmap", "Bitmap size: $sizeInPixels x $sizeInPixels")
+    Log.d("CircleBitmap", "Drawn at : $x, $y")
+
+    canvas.drawCircle(sizeInPixels / 2f, sizeInPixels / 2f, sizeInPixels / 2f, paint)
+
+    // Log statement to indicate that circle drawing is completed
+    Log.d("CircleBitmap", "Circle drawn on bitmap")
+
+    return bitmap
+}
+
+fun createTransparentOverlayBitmap(): Bitmap {
+    val size = 1024 // Increase the size if needed
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val paint = Paint().apply {
+        color = android.graphics.Color.argb(100, 0, 0, 0) // Adjust the alpha value for better visibility
+        style = Paint.Style.FILL
+    }
+    canvas.drawRect(0f, 0f, size.toFloat(), size.toFloat(), paint)
     return bitmap
 }
 
