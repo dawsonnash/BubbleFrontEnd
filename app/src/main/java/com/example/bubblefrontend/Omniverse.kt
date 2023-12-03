@@ -229,7 +229,7 @@ fun MapViewContainer(
 
             // Initial population of the grid
             tileCoordinates?.let {
-                populateGrid(googleMap, it.first, it.second)
+                populateGrid(googleMap, posts, it.first, it.second)
             }
 
             googleMap.setOnCameraIdleListener {
@@ -242,15 +242,20 @@ fun MapViewContainer(
                 updateTileCoordinates(newTileCoordinates)
 
                 // Repopulate the grid based on the new tile coordinates
-                populateGrid(googleMap, newTileCoordinates.first, newTileCoordinates.second)
+                populateGrid(googleMap, posts, newTileCoordinates.first, newTileCoordinates.second)
             }
         }
     }
 }
 
-fun populateGrid(googleMap: GoogleMap, currentX: Int, currentY: Int) {
+val postTileMap = mutableMapOf<Pair<Int, Int>, Post>()
+
+fun populateGrid(googleMap: GoogleMap, posts: Array<Post>, currentX: Int, currentY: Int) {
     val zoomLevel = 5
     val circleSizeInPixels = 650 // Size of the circle in pixels
+
+    // A counter to keep track of how many posts have been placed
+    var postIndex = 0
 
     for (i in -1..1) {
         for (j in -1..1) {
@@ -260,22 +265,30 @@ fun populateGrid(googleMap: GoogleMap, currentX: Int, currentY: Int) {
             val (lat, lon) = tileToLatLong(x, y, zoomLevel)
             val location = LatLng(lat, lon)
 
-            // Ensure x and y are within your grid bounds
-            if (x in 0..31 && y in 0..31) {
-              val bubbleMarker = blankBubble(googleMap, zoomLevel, circleSizeInPixels, x, y)
+            // Determine the correct bubble marker
+            var bubbleMarker =  blankBubble(googleMap, circleSizeInPixels, x, y)
 
-                val markerOptions = MarkerOptions()
-                    .position(location)
-                    .icon(BitmapDescriptorFactory.fromBitmap(bubbleMarker))
+            if (postIndex < posts.size) {
+                val post = posts[postIndex]
+                bubbleMarker = testBubble(circleSizeInPixels, post)
 
-                googleMap.addMarker(markerOptions)
+            }
 
+            val markerOptions = MarkerOptions()
+                .position(location)
+                .icon(BitmapDescriptorFactory.fromBitmap(bubbleMarker))
+
+            googleMap.addMarker(markerOptions)
+
+            // Increment the postIndex if we used a post
+            if (postIndex < posts.size) {
+                postIndex++
             }
         }
     }
 }
 
-fun blankBubble(googleMap: GoogleMap, zoomLevel: Int, circleSizeInPixels: Int, tileX: Int, tileY: Int): Bitmap {
+fun blankBubble(googleMap: GoogleMap, circleSizeInPixels: Int, tileX: Int, tileY: Int): Bitmap {
     val bitmap = Bitmap.createBitmap(circleSizeInPixels, circleSizeInPixels, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
 
@@ -322,13 +335,13 @@ fun testBubble(circleSizeInPixels: Int, post: Post): Bitmap {
     canvas.drawCircle(circleSizeInPixels / 2f, circleSizeInPixels / 2f, circleSizeInPixels / 2f, circlePaint)
 
     // Text to be drawn on the circle
-    val text = post.caption
+    val text = post.username
 
     // Paint for the text
     val textPaint = Paint().apply {
         color = android.graphics.Color.WHITE // Set the text color
         textAlign = Paint.Align.CENTER
-        textSize = circleSizeInPixels / 5f // Set the text size relative to the circle size
+        textSize = circleSizeInPixels / 12f // Set the text size relative to the circle size
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD) // Make text bold
     }
 
