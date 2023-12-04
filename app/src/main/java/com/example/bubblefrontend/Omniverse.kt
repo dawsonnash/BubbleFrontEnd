@@ -105,9 +105,12 @@ import com.google.android.gms.maps.model.VisibleRegion
 import com.google.gson.Gson
 import kotlinx.coroutines.delay
 import android.graphics.Canvas
+import android.graphics.ComposeShader
+import android.graphics.PorterDuff
 import android.graphics.RadialGradient
 import android.graphics.RectF
 import android.graphics.Shader
+import android.graphics.SweepGradient
 import android.graphics.Typeface
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.core.content.ContextCompat
@@ -157,7 +160,7 @@ class Omniverse : ComponentActivity() {
             Toast.makeText(this, message, Toast.LENGTH_LONG).show()
         }
         // Default values for page and pageSize
-        postModel.fetchPosts(page = 1, pageSize = 20)
+        postModel.fetchPosts(page = 1, pageSize = 50)
         nonUserModel.fetchUsers()
 
 
@@ -418,22 +421,35 @@ suspend fun postBubble(circleSizeInPixels: Int, post: FeedData, context: Context
     val bitmap = Bitmap.createBitmap(circleSizeInPixels, circleSizeInPixels, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
 
-    // Draw the background circle
     val circlePaint = Paint().apply {
-        // Set a semi-transparent black color
-        color = Color.argb(255, 0, 0, 0) // 50% transparent black
-
-        // Create a radial gradient
         val radius = circleSizeInPixels / 2f
         val centerX = circleSizeInPixels / 2f
         val centerY = circleSizeInPixels / 2f
-        shader = RadialGradient(centerX, centerY, radius,
-            Color.argb(255, 0, 0, 0), // Start color (semi-transparent black)
-            Color.argb(0, 0, 0, 0), // End color (fully transparent)
-            Shader.TileMode.CLAMP)
+
+        // Create a sweep gradient with opacity in colors
+        val sweepColors = intArrayOf(
+            Color.argb(80, 255, 0, 0),   // Semi-transparent Red
+            Color.argb(80, 0, 255, 0),   // Semi-transparent Green
+            Color.argb(80, 0, 0, 255),   // Semi-transparent Blue
+            Color.argb(80, 255, 0, 0)    // Semi-transparent Red again to complete the cycle
+        )
+        val sweepShader = SweepGradient(centerX, centerY, sweepColors, null)
+
+        // Adjust the radial gradient to create a smoother fade
+        val radialColors = intArrayOf(
+            Color.argb(255, 0, 0, 0), // Solid black in the center
+            Color.argb(0, 0, 0, 0)    // Fully transparent at the edges
+        )
+        val radialPositions = floatArrayOf(0.5f, 1f) // Adjust this for smoother transition
+        val radialShader = RadialGradient(centerX, centerY, radius, radialColors, radialPositions, Shader.TileMode.CLAMP)
+
+        // Combine the two shaders
+        shader = ComposeShader(sweepShader, radialShader, PorterDuff.Mode.SRC_OVER)
 
         style = Paint.Style.FILL
     }
+
+
 
     canvas.drawCircle(
         circleSizeInPixels / 2f,
