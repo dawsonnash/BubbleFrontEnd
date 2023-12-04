@@ -6,10 +6,12 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.BitmapShader
 import android.graphics.Paint
 import android.net.Uri
 import androidx.compose.ui.geometry.Size
 import android.os.Bundle
+import android.graphics.Color
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -65,7 +67,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
@@ -104,7 +105,9 @@ import com.google.android.gms.maps.model.VisibleRegion
 import com.google.gson.Gson
 import kotlinx.coroutines.delay
 import android.graphics.Canvas
+import android.graphics.RadialGradient
 import android.graphics.RectF
+import android.graphics.Shader
 import android.graphics.Typeface
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.core.content.ContextCompat
@@ -221,7 +224,7 @@ fun OmniverseScreen(postModel: PostModel, nonUserModel: NonUserModel,postTileMap
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .padding(top = 16.dp)
-                    .background(Color.White, shape = RoundedCornerShape(4.dp))
+                    .background(androidx.compose.ui.graphics.Color.White, shape = RoundedCornerShape(4.dp))
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             )
         }
@@ -412,76 +415,163 @@ fun blankBubble(circleSizeInPixels: Int, tileX: Int, tileY: Int): Bitmap {
 }
 
 suspend fun postBubble(circleSizeInPixels: Int, post: FeedData, context: Context): Bitmap {
-
     val bitmap = Bitmap.createBitmap(circleSizeInPixels, circleSizeInPixels, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
 
-    // Paint for the circle
+    // Draw the background circle
     val circlePaint = Paint().apply {
-        color = android.graphics.Color.BLACK // Circle color
+        // Set a semi-transparent black color
+        color = Color.argb(255, 0, 0, 0) // 50% transparent black
+
+        // Create a radial gradient
+        val radius = circleSizeInPixels / 2f
+        val centerX = circleSizeInPixels / 2f
+        val centerY = circleSizeInPixels / 2f
+        shader = RadialGradient(centerX, centerY, radius,
+            Color.argb(255, 0, 0, 0), // Start color (semi-transparent black)
+            Color.argb(0, 0, 0, 0), // End color (fully transparent)
+            Shader.TileMode.CLAMP)
+
         style = Paint.Style.FILL
     }
 
-    // Draw the circle
     canvas.drawCircle(
         circleSizeInPixels / 2f,
         circleSizeInPixels / 2f,
         circleSizeInPixels / 2f,
         circlePaint
     )
-    // Load the profile image and post image
-    val profileImage = loadImage(post.profile_picture, context)
 
+
+    // Load and crop the profile image
+    val profileImage = loadImage(post.profile_picture, context)?.let { cropToCircle(it, 2f) }
+
+    // Define sizes and positions for elements
+    val profileImageSize = circleSizeInPixels / 4
+    val profileImageX = 10f
+    val profileImageY = 10f
+    val textX = profileImageX + profileImageSize + 10f
+    val textY = profileImageY + profileImageSize / 2f
 
     // Draw the profile image
     profileImage?.let {
-        val profileImageSize = circleSizeInPixels / 4 // Adjust size as needed
-        val profileImageX = (circleSizeInPixels - profileImageSize) / 2f
-        val profileImageY = circleSizeInPixels / 4f
         canvas.drawBitmap(it, null, RectF(profileImageX, profileImageY, profileImageX + profileImageSize, profileImageY + profileImageSize), null)
     }
 
+    val username = post.username
+    val timeAgo = post.timeAgo
+    val textPaint = Paint().apply {
+        color = android.graphics.Color.WHITE
+        textSize = circleSizeInPixels / 15f
+        typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        textAlign = Paint.Align.CENTER // Align text to center
+    }
+    // Calculate the center of the circle
+    val centerX = circleSizeInPixels / 2f
+    // Draw the username centered horizontally in the circle
+    canvas.drawText(username, centerX, textY, textPaint)
+
+// Measure the width of the time_ago text
+    val timeAgoWidth = textPaint.measureText(timeAgo)
+
+// Calculate position for the time_ago text
+    val timeAgoX = centerX + timeAgoWidth / 2 + 170f
+    val timeAgoY = textY // Align vertically with the username
+
+
+
+// Draw a circle & time_ago text
+    val circleRadius = timeAgoWidth / 2 + 10f // Adjust the 10f for padding as needed
+    val circle2Paint = Paint().apply {
+        color = android.graphics.Color.WHITE // Circle color
+        style = Paint.Style.STROKE // Stroke style
+        strokeWidth = 3f // Width of the circle's stroke
+    }
+    canvas.drawCircle(timeAgoX, timeAgoY - textPaint.textSize / 2, circleRadius, circlePaint)
+    canvas.drawText(timeAgo, timeAgoX, timeAgoY, textPaint)
+
+
+    // Load and draw the post image if available
     if (post.photo == "1") {
-        // Draw the post image
-        val postImage = loadImage(post.photo_url, context)
+        // Change this line to make it a square instead of a circle
+        val postImage = loadImage(post.photo_url, context)?.let { cropToCircle(it, 2f) }
+        val postImageSize = circleSizeInPixels / 2
+        val postImageX = (circleSizeInPixels - postImageSize) / 2f
+        val postImageY = profileImageY + profileImageSize + 10f
+
         postImage?.let {
-            val postImageSize = circleSizeInPixels / 4 // Adjust size as needed
-            val postImageX = (circleSizeInPixels - postImageSize) / 2f
-            val postImageY = 2 * circleSizeInPixels / 4f
-            canvas.drawBitmap(
-                it,
-                null,
-                RectF(
-                    postImageX,
-                    postImageY,
-                    postImageX + postImageSize,
-                    postImageY + postImageSize
-                ),
-                null
-            )
+            canvas.drawBitmap(it, null, RectF(postImageX, postImageY, postImageX + postImageSize, postImageY + postImageSize), null)
+        }
+    }
+    else {
+        // Draw the caption if there is no post image
+        val caption = post.caption
+        val captionPaint = Paint().apply {
+            color = android.graphics.Color.WHITE
+            textSize = circleSizeInPixels / 20f
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            textAlign = Paint.Align.CENTER // Align text to center
+        }
+
+        // Define the area for the caption
+        val captionMaxWidth = circleSizeInPixels - 100f // Adjusted for padding
+
+        // Split the caption into lines
+        val lines = splitTextIntoLines(caption, captionPaint, captionMaxWidth)
+
+        // Calculate the total height of the text
+        val textHeight = lines.size * (-captionPaint.ascent() + captionPaint.descent())
+
+        // Calculate the vertical starting position to center the text
+        var captionY = (circleSizeInPixels - textHeight) / 2f
+
+        val centerX = circleSizeInPixels / 2f // Center X position for the text
+
+        for (line in lines) {
+            canvas.drawText(line, centerX, captionY, captionPaint) // Draw text centered
+            captionY += -captionPaint.ascent() + captionPaint.descent() // Move to the next line
         }
     }
 
-    // Text to be drawn on the circle
-    val text = post.caption.toString()
-
-    // Paint for the text
-    val textPaint = Paint().apply {
-        color = android.graphics.Color.WHITE // Set the text color
-        textAlign = Paint.Align.CENTER
-        textSize = circleSizeInPixels / 20f // Set the text size relative to the circle size
-        typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD) // Make text bold
-    }
-
-    // Calculate the position for the text to be centered
-    val xPos = circleSizeInPixels / 2f
-    val yPos = (circleSizeInPixels / 2f - (textPaint.descent() + textPaint.ascent()) / 2)
-
-    // Draw the text
-    canvas.drawText(text, xPos, yPos, textPaint)
-
     return bitmap
 }
+fun splitTextIntoLines(text: String, paint: Paint, maxWidth: Float): List<String> {
+    val words = text.split(" ")
+    val lines = mutableListOf<String>()
+    var currentLine = ""
+
+    for (word in words) {
+        val potentialLine = if (currentLine.isEmpty()) word else "$currentLine $word"
+        currentLine = if (paint.measureText(potentialLine) <= maxWidth) {
+            potentialLine
+        } else {
+            lines.add(currentLine)
+            word
+        }
+    }
+
+    if (currentLine.isNotEmpty()) {
+        lines.add(currentLine)
+    }
+
+    return lines
+}
+// Function to crop a bitmap to a circle
+fun cropToCircle(bitmap: Bitmap, radiusF: Float): Bitmap {
+    val size = Math.min(bitmap.width, bitmap.height)
+    val output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(output)
+
+    val paint = Paint()
+    paint.isAntiAlias = true
+    paint.shader = BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+
+    val radius = size / radiusF
+    canvas.drawCircle(radius, radius, radius, paint)
+
+    return output
+}
+
 
 // Function to load an image from a URL into a Bitmap
 suspend fun loadImage(imageUrl: String, context: Context): Bitmap? {
@@ -589,7 +679,7 @@ fun FullScreenPostView(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White.copy(alpha = 0.8f))
+            .background(androidx.compose.ui.graphics.Color.White.copy(alpha = 0.8f))
     ) {
         Column {
             Button(onClick = onBack) {
@@ -622,7 +712,7 @@ fun FullScreenPostView(
                     modifier = Modifier
                         .size(40.dp) // Set size of profile image
                         .clip(CircleShape)
-                        .background(Color.Gray), // Placeholder background
+                        .background(androidx.compose.ui.graphics.Color.Gray), // Placeholder background
                     contentScale = ContentScale.Crop
 
 
@@ -654,7 +744,7 @@ fun FullScreenPostView(
                 Text(
                     text = post.caption,
                     fontSize = 20.sp,
-                    color = Color.Black,
+                    color = androidx.compose.ui.graphics.Color.Black,
                     textAlign = TextAlign.Left,
                     modifier = Modifier
                         .fillMaxWidth()
