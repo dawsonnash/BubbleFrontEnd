@@ -104,9 +104,16 @@ import com.google.android.gms.maps.model.VisibleRegion
 import com.google.gson.Gson
 import kotlinx.coroutines.delay
 import android.graphics.Canvas
+import android.graphics.RectF
 import android.graphics.Typeface
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.toBitmap
+import coil.ImageLoader
+import coil.request.ImageRequest
+import coil.request.SuccessResult
 import com.google.android.gms.maps.model.LatLngBounds
+import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.atan
 import kotlin.math.cos
@@ -246,7 +253,6 @@ fun OmniverseScreen(postModel: PostModel, nonUserModel: NonUserModel,postTileMap
     BottomDashboard()
 }
 }
-
 @Composable
 fun MapViewContainer(
     posts: List<FeedData>,
@@ -255,22 +261,16 @@ fun MapViewContainer(
     tileCoordinates: Pair<Int, Int>?,
     context: Context,
     updateTileCoordinates: (Pair<Int, Int>) -> Unit,
-    onMarkerClicked: (FeedData) -> Unit  // Add this parameter
+    onMarkerClicked: (FeedData) -> Unit
 ) {
-    var selectedPost by remember { mutableStateOf<FeedData?>(null) }
+    val coroutineScope = rememberCoroutineScope()
 
     AndroidView({ mapView }) { mapView ->
         mapView.getMapAsync { googleMap ->
             googleMap.mapType = GoogleMap.MAP_TYPE_SATELLITE
-            //  googleMap.mapType = GoogleMap.MAP_TYPE_NONE
-            googleMap.uiSettings.isZoomControlsEnabled = false  // Disable zoom controls
-            googleMap.uiSettings.isZoomGesturesEnabled = false  // Disable zoom gestures
+            googleMap.uiSettings.isZoomControlsEnabled = false
+            googleMap.uiSettings.isZoomGesturesEnabled = false
             googleMap.moveCamera(CameraUpdateFactory.zoomTo(5.0f))
-
-            // Initial population of the grid
-            tileCoordinates?.let {
-                populateGrid(googleMap, posts, postTileMap, it.first, it.second, context, onMarkerClicked)
-            }
 
             googleMap.setOnCameraIdleListener {
                 val centerLat = googleMap.cameraPosition.target.latitude
@@ -281,23 +281,25 @@ fun MapViewContainer(
                 val newTileCoordinates = worldToTileCoordinates(worldX, worldY)
                 updateTileCoordinates(newTileCoordinates)
 
-                // Repopulate the grid based on the new tile coordinates
-                populateGrid(
-                    googleMap,
-                    posts,
-                    postTileMap,
-                    newTileCoordinates.first,
-                    newTileCoordinates.second,
-                    context,
-                    onMarkerClicked
-                )
+                coroutineScope.launch {
+                    populateGrid(
+                        googleMap,
+                        posts,
+                        postTileMap,
+                        newTileCoordinates.first,
+                        newTileCoordinates.second,
+                        context,
+                        onMarkerClicked
+                    )
+                }
             }
         }
     }
 }
+
 // The tile map is responsible for determining if a post is at a specific tile coordinate
 var postIndex = 0
-fun populateGrid(
+suspend fun populateGrid(
     googleMap: GoogleMap,
     posts: List<FeedData>,
     postTileMap: MutableMap<Pair<Int, Int>, FeedData>,
@@ -323,14 +325,15 @@ fun populateGrid(
                 // Use testBubble for tiles that already have a post
                 postTileMap.containsKey(tileKey) -> postBubble(
                     circleSizeInPixels,
-                    postTileMap[tileKey]!!
+                    postTileMap[tileKey]!!,
+                    context
                 )
 
                 // Assign a new post to this tile and use testBubble
                 postIndex < posts.size -> {
                     val post = posts[postIndex++]
                     postTileMap[tileKey] = post
-                    postBubble(circleSizeInPixels, post)
+                    postBubble(circleSizeInPixels, post, context)
                 }
 
                 // Use blankBubble for tiles without a post
@@ -408,9 +411,9 @@ fun blankBubble(circleSizeInPixels: Int, tileX: Int, tileY: Int): Bitmap {
     return bitmap
 }
 
-fun postBubble(circleSizeInPixels: Int, post: FeedData): Bitmap {
-    val bitmap =
-        Bitmap.createBitmap(circleSizeInPixels, circleSizeInPixels, Bitmap.Config.ARGB_8888)
+suspend fun postBubble(circleSizeInPixels: Int, post: FeedData, context: Context): Bitmap {
+
+    val bitmap = Bitmap.createBitmap(circleSizeInPixels, circleSizeInPixels, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
 
     // Paint for the circle
@@ -426,6 +429,38 @@ fun postBubble(circleSizeInPixels: Int, post: FeedData): Bitmap {
         circleSizeInPixels / 2f,
         circlePaint
     )
+    // Load the profile image and post image
+    val profileImage = loadImage(post.profile_picture, context)
+
+
+    // Draw the profile image
+    profileImage?.let {
+        val profileImageSize = circleSizeInPixels / 4 // Adjust size as needed
+        val profileImageX = (circleSizeInPixels - profileImageSize) / 2f
+        val profileImageY = circleSizeInPixels / 4f
+        canvas.drawBitmap(it, null, RectF(profileImageX, profileImageY, profileImageX + profileImageSize, profileImageY + profileImageSize), null)
+    }
+
+    if (post.photo == "1") {
+        // Draw the post image
+        val postImage = loadImage(post.photo_url, context)
+        postImage?.let {
+            val postImageSize = circleSizeInPixels / 4 // Adjust size as needed
+            val postImageX = (circleSizeInPixels - postImageSize) / 2f
+            val postImageY = 2 * circleSizeInPixels / 4f
+            canvas.drawBitmap(
+                it,
+                null,
+                RectF(
+                    postImageX,
+                    postImageY,
+                    postImageX + postImageSize,
+                    postImageY + postImageSize
+                ),
+                null
+            )
+        }
+    }
 
     // Text to be drawn on the circle
     val text = post.caption.toString()
@@ -448,7 +483,24 @@ fun postBubble(circleSizeInPixels: Int, post: FeedData): Bitmap {
     return bitmap
 }
 
+// Function to load an image from a URL into a Bitmap
+suspend fun loadImage(imageUrl: String, context: Context): Bitmap? {
 
+    val baseURL = "http://54.202.77.126:8080"
+    val fullImageURL = baseURL + imageUrl
+
+    val imageLoader = ImageLoader(context)
+    Log.d("UrlLoadImages", "url: $fullImageURL")
+    val request = ImageRequest.Builder(context)
+        .data(fullImageURL)
+        .allowHardware(false) // Disable hardware bitmaps as they can't be drawn on a Canvas.
+        .build()
+
+    val result = imageLoader.execute(request)
+    val bitmap = if (result is SuccessResult) result.drawable.toBitmap() else null
+    Log.d("loadImage", "Bitmap loaded: ${bitmap != null}")
+    return bitmap
+}
 fun tileToLatLong(x: Int, y: Int, zoomLevel: Int): Pair<Double, Double> {
     val n = 2.0.pow(zoomLevel.toDouble())
     val lonDeg = x / n * 360.0 - 180.0
