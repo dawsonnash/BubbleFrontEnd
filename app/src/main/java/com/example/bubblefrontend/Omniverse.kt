@@ -7,23 +7,27 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.BitmapShader
-import android.graphics.Paint
-import android.net.Uri
-import androidx.compose.ui.geometry.Size
-import android.os.Bundle
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.ComposeShader
+import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.RadialGradient
+import android.graphics.RectF
+import android.graphics.Shader
+import android.graphics.SweepGradient
+import android.graphics.Typeface
+import android.net.Uri
+import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,7 +36,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -41,8 +44,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -51,74 +52,49 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModelProvider
+import coil.ImageLoader
 import coil.compose.rememberImagePainter
+import coil.request.ImageRequest
+import coil.request.SuccessResult
 import com.example.bubblefrontend.api.ApiHandler
 import com.example.bubblefrontend.api.FeedData
 import com.example.bubblefrontend.api.NonUserModel
 import com.example.bubblefrontend.api.PostModel
 import com.example.bubblefrontend.api.UiFeedData
-import com.google.android.gms.maps.MapView
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.CameraUpdateFactory
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
-import com.google.android.gms.maps.Projection
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.CircleOptions
-import com.google.android.gms.maps.model.GroundOverlayOptions
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.gms.maps.model.VisibleRegion
 import com.google.gson.Gson
-import kotlinx.coroutines.delay
-import android.graphics.Canvas
-import android.graphics.ComposeShader
-import android.graphics.PorterDuff
-import android.graphics.RadialGradient
-import android.graphics.RectF
-import android.graphics.Shader
-import android.graphics.SweepGradient
-import android.graphics.Typeface
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.core.content.ContextCompat
-import androidx.core.graphics.drawable.toBitmap
-import coil.ImageLoader
-import coil.request.ImageRequest
-import coil.request.SuccessResult
-import com.google.android.gms.maps.model.LatLngBounds
 import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.atan
@@ -127,7 +103,6 @@ import kotlin.math.floor
 import kotlin.math.ln
 import kotlin.math.pow
 import kotlin.math.sinh
-import kotlin.math.sqrt
 import kotlin.math.tan
 
 class Omniverse : ComponentActivity() {
@@ -166,18 +141,27 @@ class Omniverse : ComponentActivity() {
 
         setContent {
             BubbleFrontEndTheme {
-                OmniverseScreen(postModel, nonUserModel, postTileMap){ imagePickerLauncher.launch("image/*") }
+                OmniverseScreen(
+                    postModel,
+                    nonUserModel,
+                    postTileMap
+                ) { imagePickerLauncher.launch("image/*") }
             }
         }
     }
+
     companion object {
         var imageUri = mutableStateOf<Uri?>(null)
     }
 }
 
 @Composable
-fun OmniverseScreen(postModel: PostModel, nonUserModel: NonUserModel,postTileMap: MutableMap<Pair<Int, Int>, FeedData>,
-                    launchImagePicker: () -> Unit) {
+fun OmniverseScreen(
+    postModel: PostModel,
+    nonUserModel: NonUserModel,
+    postTileMap: MutableMap<Pair<Int, Int>, FeedData>,
+    launchImagePicker: () -> Unit
+) {
     val mapView = rememberMapViewWithLifecycle()
     var tileCoordinates by remember { mutableStateOf<Pair<Int, Int>?>(null) }
     var selectedPost by remember { mutableStateOf<FeedData?>(null) }
@@ -192,73 +176,78 @@ fun OmniverseScreen(postModel: PostModel, nonUserModel: NonUserModel,postTileMap
 
     val uiPostList by postModel.uiPostList.observeAsState(initial = listOf())
 
-    Column(){
-    Box(modifier = Modifier
-        .weight(1f)
-        .fillMaxWidth()
-    ) {
-        MapViewContainer(
-            posts,
-            postTileMap,
-            mapView,
-            tileCoordinates,
-            context,
-            updateTileCoordinates = { newTileCoordinates ->
-                tileCoordinates = newTileCoordinates
-            },
-            onMarkerClicked = { post ->
-                selectedPost = post // Update the selected post when a marker is clicked
-                showFullScreenPostView = true
-            }
-        )
-        if (showFullScreenPostView && selectedPost != null) {
-            FullScreenPostView(
-                selectedPost!!,
-                postModel.uiPostList,
-                apiHandler,
-                nonUserModel,
-                context,
-                onBack = { showFullScreenPostView = false })
-        }
-
-        tileCoordinates?.let {
-            Text(
-                "Current Tile: X=${it.first}, Y=${it.second}",
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 16.dp)
-                    .background(androidx.compose.ui.graphics.Color.White, shape = RoundedCornerShape(4.dp))
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-            )
-        }
-        FloatingActionButton(
-            onClick = { showNewPostDialog = true },
+    Column() {
+        Box(
             modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(bottom = 70.dp, end = 16.dp)
+                .weight(1f)
+                .fillMaxWidth()
         ) {
-            Icon(imageVector = Icons.Filled.Add, contentDescription = "Add Post")
-        }
-        if (showNewPostDialog) {
-            CreatePostDialog(
-                context, apiHandler, postModel,
-                onPostCreate = { caption, pickedImageUri ->
-                    Omniverse.imageUri.value = null // Reset the image URI
-                    showNewPostDialog = false
-
-
+            MapViewContainer(
+                posts,
+                postTileMap,
+                mapView,
+                tileCoordinates,
+                context,
+                updateTileCoordinates = { newTileCoordinates ->
+                    tileCoordinates = newTileCoordinates
                 },
-                onDismiss = {
-                    Omniverse.imageUri.value = null // Reset the image URI
-                    showNewPostDialog = false
-                },
-                launchImagePicker = launchImagePicker
+                onMarkerClicked = { post ->
+                    selectedPost = post // Update the selected post when a marker is clicked
+                    showFullScreenPostView = true
+                }
             )
+            if (showFullScreenPostView && selectedPost != null) {
+                FullScreenPostView(
+                    selectedPost!!,
+                    postModel.uiPostList,
+                    apiHandler,
+                    nonUserModel,
+                    context,
+                    onBack = { showFullScreenPostView = false })
+            }
+
+            tileCoordinates?.let {
+                Text(
+                    "Current Tile: X=${it.first}, Y=${it.second}",
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 16.dp)
+                        .background(
+                            androidx.compose.ui.graphics.Color.White,
+                            shape = RoundedCornerShape(4.dp)
+                        )
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
+            FloatingActionButton(
+                onClick = { showNewPostDialog = true },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(bottom = 70.dp, end = 16.dp)
+            ) {
+                Icon(imageVector = Icons.Filled.Add, contentDescription = "Add Post")
+            }
+            if (showNewPostDialog) {
+                CreatePostDialog(
+                    context, apiHandler, postModel,
+                    onPostCreate = { caption, pickedImageUri ->
+                        Omniverse.imageUri.value = null // Reset the image URI
+                        showNewPostDialog = false
+
+
+                    },
+                    onDismiss = {
+                        Omniverse.imageUri.value = null // Reset the image URI
+                        showNewPostDialog = false
+                    },
+                    launchImagePicker = launchImagePicker
+                )
+            }
         }
+        BottomDashboard()
     }
-    BottomDashboard()
 }
-}
+
 @Composable
 fun MapViewContainer(
     posts: List<FeedData>,
@@ -270,13 +259,20 @@ fun MapViewContainer(
     onMarkerClicked: (FeedData) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
+    var AlaskaStartup by remember { mutableStateOf(true) }
 
     AndroidView({ mapView }) { mapView ->
         mapView.getMapAsync { googleMap ->
             googleMap.mapType = GoogleMap.MAP_TYPE_SATELLITE
             googleMap.uiSettings.isZoomControlsEnabled = false
             googleMap.uiSettings.isZoomGesturesEnabled = false
-            googleMap.moveCamera(CameraUpdateFactory.zoomTo(5.0f))
+            if (AlaskaStartup) {
+                val initialLatLng = LatLng(61.2181, -149.9003) // Anchorage, Alaska
+                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLatLng, 5.0f))
+                AlaskaStartup = false
+            } else {
+                googleMap.moveCamera(CameraUpdateFactory.zoomTo(5.0f))
+            }
 
             googleMap.setOnCameraIdleListener {
                 val centerLat = googleMap.cameraPosition.target.latitude
@@ -396,7 +392,7 @@ fun blankBubble(circleSizeInPixels: Int, tileX: Int, tileY: Int): Bitmap {
     )
 
     // Text to be drawn on the circle
-    val text = "$tileX, $tileY"
+  //  val text = "$tileX, $tileY"
 
     // Paint for the text
     val textPaint = Paint().apply {
@@ -418,8 +414,22 @@ fun blankBubble(circleSizeInPixels: Int, tileX: Int, tileY: Int): Bitmap {
 }
 
 suspend fun postBubble(circleSizeInPixels: Int, post: FeedData, context: Context): Bitmap {
-    val bitmap = Bitmap.createBitmap(circleSizeInPixels, circleSizeInPixels, Bitmap.Config.ARGB_8888)
+    val bitmap =
+        Bitmap.createBitmap(circleSizeInPixels, circleSizeInPixels, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
+
+    // Load the image from resources
+    val bubbleBackgroundBitmap = BitmapFactory.decodeResource(context.resources, R.drawable.bubble)
+    val scaledBubbleBackground = Bitmap.createScaledBitmap(
+        bubbleBackgroundBitmap,
+        circleSizeInPixels,
+        circleSizeInPixels,
+        true
+    )
+    val croppedBubbleBackground = cropToCircle(scaledBubbleBackground, 2f)
+
+    canvas.drawBitmap(croppedBubbleBackground, 0f, 0f, null)
+
 
     val circlePaint = Paint().apply {
         val radius = circleSizeInPixels / 2f
@@ -428,20 +438,27 @@ suspend fun postBubble(circleSizeInPixels: Int, post: FeedData, context: Context
 
         // Create a sweep gradient with opacity in colors
         val sweepColors = intArrayOf(
-            Color.argb(80, 255, 0, 0),   // Semi-transparent Red
-            Color.argb(80, 0, 255, 0),   // Semi-transparent Green
-            Color.argb(80, 0, 0, 255),   // Semi-transparent Blue
-            Color.argb(80, 255, 0, 0)    // Semi-transparent Red again to complete the cycle
+            Color.argb(120, 255, 0, 0),   // Semi-transparent Red
+            Color.argb(120, 0, 255, 0),   // Semi-transparent Green
+            Color.argb(120, 0, 0, 255),   // Semi-transparent Blue
+            Color.argb(120, 255, 0, 0)    // Semi-transparent Red again to complete the cycle
         )
         val sweepShader = SweepGradient(centerX, centerY, sweepColors, null)
 
         // Adjust the radial gradient to create a smoother fade
         val radialColors = intArrayOf(
-            Color.argb(255, 0, 0, 0), // Solid black in the center
+            Color.argb(200, 0, 0, 0), // Solid black in the center
             Color.argb(0, 0, 0, 0)    // Fully transparent at the edges
         )
         val radialPositions = floatArrayOf(0.5f, 1f) // Adjust this for smoother transition
-        val radialShader = RadialGradient(centerX, centerY, radius, radialColors, radialPositions, Shader.TileMode.CLAMP)
+        val radialShader = RadialGradient(
+            centerX,
+            centerY,
+            radius,
+            radialColors,
+            radialPositions,
+            Shader.TileMode.CLAMP
+        )
 
         // Combine the two shaders
         shader = ComposeShader(sweepShader, radialShader, PorterDuff.Mode.SRC_OVER)
@@ -471,7 +488,17 @@ suspend fun postBubble(circleSizeInPixels: Int, post: FeedData, context: Context
 
     // Draw the profile image
     profileImage?.let {
-        canvas.drawBitmap(it, null, RectF(profileImageX, profileImageY, profileImageX + profileImageSize, profileImageY + profileImageSize), null)
+        canvas.drawBitmap(
+            it,
+            null,
+            RectF(
+                profileImageX,
+                profileImageY,
+                profileImageX + profileImageSize,
+                profileImageY + profileImageSize
+            ),
+            null
+        )
     }
 
     val username = post.username
@@ -495,31 +522,38 @@ suspend fun postBubble(circleSizeInPixels: Int, post: FeedData, context: Context
     val timeAgoY = textY // Align vertically with the username
 
 
-
-// Draw a circle & time_ago text
+    // Draw a circle & time_ago text. Using old circle color
     val circleRadius = timeAgoWidth / 2 + 10f // Adjust the 10f for padding as needed
-    val circle2Paint = Paint().apply {
-        color = android.graphics.Color.WHITE // Circle color
-        style = Paint.Style.STROKE // Stroke style
-        strokeWidth = 3f // Width of the circle's stroke
-    }
     canvas.drawCircle(timeAgoX, timeAgoY - textPaint.textSize / 2, circleRadius, circlePaint)
     canvas.drawText(timeAgo, timeAgoX, timeAgoY, textPaint)
 
 
     // Load and draw the post image if available
     if (post.photo == "1") {
-        // Change this line to make it a square instead of a circle
-        val postImage = loadImage(post.photo_url, context)?.let { cropToCircle(it, 2f) }
-        val postImageSize = circleSizeInPixels / 2
+        // Load the post image
+        val postImage = loadImage(post.photo_url, context)
+        val postImageSize = circleSizeInPixels / 2 // Smaller size for the post image
         val postImageX = (circleSizeInPixels - postImageSize) / 2f
         val postImageY = profileImageY + profileImageSize + 10f
 
         postImage?.let {
             canvas.drawBitmap(it, null, RectF(postImageX, postImageY, postImageX + postImageSize, postImageY + postImageSize), null)
         }
-    }
-    else {
+
+        // Draw part of the caption underneath the post image
+        val caption = post.caption
+        val captionPaint = Paint().apply {
+            color = android.graphics.Color.WHITE
+            textSize = circleSizeInPixels / 20f // Adjust text size for the caption
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            textAlign = Paint.Align.CENTER
+        }
+        val captionMaxWidth = circleSizeInPixels - 200f // Adjust the caption width to fit within the bubble
+        val truncatedCaption = truncateText(caption, captionPaint, captionMaxWidth)
+
+        val captionY = (postImageY + 25f) + postImageSize + 25f // Position for the caption
+        canvas.drawText(truncatedCaption, circleSizeInPixels / 2f, captionY, captionPaint)
+    } else {
         // Draw the caption if there is no post image
         val caption = post.caption
         val captionPaint = Paint().apply {
@@ -551,6 +585,29 @@ suspend fun postBubble(circleSizeInPixels: Int, post: FeedData, context: Context
 
     return bitmap
 }
+// For adding the '...' on the end of text that is too long for the bubble
+
+fun truncateText(text: String, paint: Paint, maxWidth: Float): String {
+    var truncatedText = text
+    var textWidth = paint.measureText(truncatedText)
+
+    if (textWidth <= maxWidth) {
+        return truncatedText // Return original text if it fits
+    }
+
+    // Add ellipsis and check width
+    truncatedText += "..."
+    textWidth = paint.measureText(truncatedText)
+
+    // Remove characters until the text fits, including ellipsis
+    while (textWidth > maxWidth && truncatedText.length > 3) {
+        // Remove one character (not including the ellipsis)
+        truncatedText = truncatedText.dropLast(4) + "..."
+        textWidth = paint.measureText(truncatedText)
+    }
+    return truncatedText
+}
+
 fun splitTextIntoLines(text: String, paint: Paint, maxWidth: Float): List<String> {
     val words = text.split(" ")
     val lines = mutableListOf<String>()
@@ -572,6 +629,7 @@ fun splitTextIntoLines(text: String, paint: Paint, maxWidth: Float): List<String
 
     return lines
 }
+
 // Function to crop a bitmap to a circle
 fun cropToCircle(bitmap: Bitmap, radiusF: Float): Bitmap {
     val size = Math.min(bitmap.width, bitmap.height)
@@ -607,6 +665,7 @@ suspend fun loadImage(imageUrl: String, context: Context): Bitmap? {
     Log.d("loadImage", "Bitmap loaded: ${bitmap != null}")
     return bitmap
 }
+
 fun tileToLatLong(x: Int, y: Int, zoomLevel: Int): Pair<Double, Double> {
     val n = 2.0.pow(zoomLevel.toDouble())
     val lonDeg = x / n * 360.0 - 180.0
@@ -620,7 +679,6 @@ fun rememberMapViewWithLifecycle(): MapView {
     val context = LocalContext.current
     val mapView = remember {
         MapView(context).apply {
-            // Additional map setup
         }
     }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -673,7 +731,7 @@ fun FullScreenPostView(
     onBack: () -> Unit
 ) {
 
-    // Observe the singleUser LiveData and react to changes
+    // Observe  singleUser LiveData and react to changes
     val user by nonUserModel.singleUser.observeAsState()
 
     // This allows for the heart icon to change state in real-time
@@ -754,7 +812,8 @@ fun FullScreenPostView(
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.padding(8.dp),
                 elevation = CardDefaults.cardElevation(
-                    defaultElevation = 10.dp)
+                    defaultElevation = 10.dp
+                )
             ) {
 
                 Text(
@@ -843,6 +902,7 @@ fun FullScreenPostView(
         }
     }
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreatePostDialog(
@@ -893,7 +953,7 @@ fun CreatePostDialog(
                             // Right now, once you create new post it just navigates refreshes global page
                             val intent = Intent(context, Omniverse::class.java)
                             context.startActivity(intent)
-                        //    clearPostTileMap()
+                            //    clearPostTileMap()
 
                         }
                     }
