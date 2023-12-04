@@ -313,33 +313,61 @@ suspend fun populateGrid(
     val zoomLevel = 5
     val circleSizeInPixels = 650 // Size of the circle in pixels
 
+    // This adjusts the current user's tile to fit where the actual center of the screen is. For some reason, the Google center tiles don't matchup with the center
+    var adjustedCurrentX = currentX + 1
+    var adjustedCurrentY =  currentY + 1
 
+    // First, try placing a post at the user's current location
+    val currentUserTileKey = Pair(adjustedCurrentX, adjustedCurrentY)
+    if (!postTileMap.containsKey(currentUserTileKey) && postIndex < posts.size) {
+        val post = posts[postIndex++]
+        postTileMap[currentUserTileKey] = post
+        postBubble(circleSizeInPixels, post, context)
+        //Log.d("populateGrid", "Placed post at user's current location: $currentUserTileKey")
+
+    }
+
+// Algorithm for placing posts around the user
     for (i in -1..1) {
         for (j in -1..1) {
-            val x = currentX + i + 1
-            val y = currentY + j + 1
+
+            val x = adjustedCurrentX + i
+            val y = adjustedCurrentY + j
+
             val tileKey = Pair(x, y)
+            // Skip the current user location since it's already processed
+            if (tileKey == currentUserTileKey) {
+               // Log.d("populateGrid", "Skipping user's current location: $tileKey")
+                continue
+            }
 
             val (lat, lon) = tileToLatLong(x, y, zoomLevel)
             val location = LatLng(lat, lon)
 
             val bubbleMarker: Bitmap = when {
                 // Use testBubble for tiles that already have a post
-                postTileMap.containsKey(tileKey) -> postBubble(
-                    circleSizeInPixels,
-                    postTileMap[tileKey]!!,
-                    context
-                )
+                postTileMap.containsKey(tileKey) -> {
+                   // Log.d("populateGrid", "Post already exists at $tileKey")
+                    postBubble(
+                        circleSizeInPixels,
+                        postTileMap[tileKey]!!,
+                        context
+                    )
+                }
 
-                // Assign a new post to this tile and use testBubble
+                // Assign a new post to this tile and use Bubble marker
                 postIndex < posts.size -> {
                     val post = posts[postIndex++]
                     postTileMap[tileKey] = post
+                   // Log.d("populateGrid", "Placing new post at $tileKey")
                     postBubble(circleSizeInPixels, post, context)
                 }
 
-                // Use blankBubble for tiles without a post
-                else -> blankBubble(circleSizeInPixels, x, y)
+                // Use "No More Post Content :(" for tiles without a post
+                else -> {
+                    //Log.d("populateGrid", "No more content for tile $tileKey")
+                    blankBubble(circleSizeInPixels, x, y)
+                }
             }
             val markerOptions = MarkerOptions()
                 .position(location)
