@@ -77,7 +77,7 @@ fun NonUserScreen(user: NonUser?) {
                         contentDescription = "Back",
                         modifier = Modifier.clickable {
                             // Navigating back to the ProfilePage
-                            val intent = Intent(context, UserSearchPage::class.java)
+                            val intent = Intent(context, Omniverse::class.java)
                             context.startActivity(intent)
                         }
                     )
