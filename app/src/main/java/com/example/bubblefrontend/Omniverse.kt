@@ -117,47 +117,6 @@ import kotlin.math.sinh
 import kotlin.math.sqrt
 import kotlin.math.tan
 
-// Test post data
-data class Post(
-    val id: Int,
-    val username: String,
-    val content: String)
-
-val posts = arrayOf(
-    Post(1,"user1", "Beautiful day at the beach!"),
-    Post(2, "adventureSeeker", "Just climbed the highest mountain!"),
-    Post(3, "natureLover", "The beauty of nature is endless."),
-    Post(4, "cityExplorer", "Exploring the city lights."),
-    Post(5, "foodie", "Tried the best pizza in town today."),
-    Post(6,"travelGuru", "Another country checked off my list!"),
-    Post(7, "fitnessFanatic", "Great workout today!"),
-    Post(8, "peacefulWanderer", "Found a quiet spot for meditation."),
-    Post(9, "artisticSoul", "Visited an amazing art gallery."),
-    Post(10, "techGeek", "Attended a cool tech conference."),
-    Post(11, "gamerLife", "Won my first gaming tournament!"),
-    Post(12, "bookworm", "Finished an incredible novel."),
-    Post(13, "musicFan", "Went to an awesome concert."),
-    Post(14, "movieBuff", "Saw the latest blockbuster."),
-    Post(15, "fashionista", "Found the perfect dress for summer."),
-    Post(16, "historyBuff", "Explored an ancient castle."),
-    Post(17, "animalLover", "Volunteered at an animal shelter."),
-    Post(18, "gardeningGuru", "My garden is in full bloom!"),
-    Post(19, "comedyKing", "Attended a hilarious stand-up show."),
-    Post(20, "scienceNerd", "Conducted a fascinating experiment."),
-    Post(21, "spaceEnthusiast", "Watched a documentary about Mars."),
-    Post(22, "beachBum", "Surfing waves all day."),
-    Post(23, "diyMaster", "Built my first piece of furniture."),
-    Post(24, "roadTripper", "Started a cross-country journey."),
-    Post(25, "dancingQueen", "Took a salsa dancing class."),
-    Post(26, "poetryLover", "Wrote a poem about spring."),
-    Post(27, "photographyFan", "Captured a stunning sunset."),
-    Post(28, "fitnessCoach", "Helped someone achieve their goal."),
-    Post(29, "chefInTraining", "Cooked a three-course meal."),
-    Post(30, "languageLearner", "Started learning a new language."),
-    Post(31, "stargazer", "Saw a shooting star last night.")
-)
-
-
 class Omniverse : ComponentActivity() {
     private lateinit var imagePickerLauncher: ActivityResultLauncher<String>
 
@@ -168,36 +127,45 @@ class Omniverse : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-                // Instantiating post model
-                postModel = ViewModelProvider(this)[PostModel::class.java]
-                postModel.toastMessage.observe(this) { message ->
-                    Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-                }
-                // Instantiating nonUserModel
-                nonUserModel = ViewModelProvider(this)[NonUserModel::class.java]
-                nonUserModel.toastMessage.observe(this) { message ->
-                    Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-                }
-                // Default values for page and pageSize
-                postModel.fetchPosts(page = 1, pageSize = 20)
-                nonUserModel.fetchUsers()
+        imagePickerLauncher =
+            registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+                // Handle the image URI
+                GlobalPage.imageUri.value = uri
+            }
+        // Instantiating post model
+        postModel = ViewModelProvider(this)[PostModel::class.java]
+        postModel.toastMessage.observe(this) { message ->
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        }
+        // Instantiating nonUserModel
+        nonUserModel = ViewModelProvider(this)[NonUserModel::class.java]
+        nonUserModel.toastMessage.observe(this) { message ->
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        }
+        // Default values for page and pageSize
+        postModel.fetchPosts(page = 1, pageSize = 20)
+        nonUserModel.fetchUsers()
 
 
         setContent {
             BubbleFrontEndTheme {
-                OmniverseScreen(postModel, nonUserModel)
+                OmniverseScreen(postModel, nonUserModel){ imagePickerLauncher.launch("image/*") }
             }
         }
     }
-
+    companion object {
+        var imageUri = mutableStateOf<Uri?>(null)
+    }
 }
 
 @Composable
-fun OmniverseScreen(postModel: PostModel, nonUserModel: NonUserModel) {
+fun OmniverseScreen(postModel: PostModel, nonUserModel: NonUserModel, launchImagePicker: () -> Unit) {
     val mapView = rememberMapViewWithLifecycle()
     var tileCoordinates by remember { mutableStateOf<Pair<Int, Int>?>(null) }
     var selectedPost by remember { mutableStateOf<FeedData?>(null) }
     var showFullScreenPostView by remember { mutableStateOf(false) }
+    var showNewPostDialog by remember { mutableStateOf(false) }
+
     val context = LocalContext.current
 
     val apiHandler = ApiHandler()
@@ -221,7 +189,13 @@ fun OmniverseScreen(postModel: PostModel, nonUserModel: NonUserModel) {
             }
         )
         if (showFullScreenPostView && selectedPost != null) {
-            FullScreenPostView(selectedPost!!, postModel.uiPostList , apiHandler, nonUserModel, context, onBack = { showFullScreenPostView = false })
+            FullScreenPostView(
+                selectedPost!!,
+                postModel.uiPostList,
+                apiHandler,
+                nonUserModel,
+                context,
+                onBack = { showFullScreenPostView = false })
         }
 
         tileCoordinates?.let {
@@ -232,6 +206,29 @@ fun OmniverseScreen(postModel: PostModel, nonUserModel: NonUserModel) {
                     .padding(top = 16.dp)
                     .background(Color.White, shape = RoundedCornerShape(4.dp))
                     .padding(horizontal = 8.dp, vertical = 4.dp)
+            )
+        }
+        FloatingActionButton(
+            onClick = { showNewPostDialog = true },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 70.dp, end = 16.dp)
+        ) {
+            Icon(imageVector = Icons.Filled.Add, contentDescription = "Add Post")
+        }
+        if (showNewPostDialog) {
+            CreatePostDialog(
+                context, apiHandler, postModel,
+                onPostCreate = { caption, pickedImageUri ->
+                    Omniverse.imageUri.value = null // Reset the image URI
+                    showNewPostDialog = false
+
+                },
+                onDismiss = {
+                    GlobalPage.imageUri.value = null // Reset the image URI
+                    showNewPostDialog = false
+                },
+                launchImagePicker = launchImagePicker
             )
         }
     }
@@ -245,13 +242,13 @@ fun MapViewContainer(
     context: Context,
     updateTileCoordinates: (Pair<Int, Int>) -> Unit,
     onMarkerClicked: (FeedData) -> Unit  // Add this parameter
-)  {
+) {
     var selectedPost by remember { mutableStateOf<FeedData?>(null) }
 
     AndroidView({ mapView }) { mapView ->
         mapView.getMapAsync { googleMap ->
             googleMap.mapType = GoogleMap.MAP_TYPE_SATELLITE
-          //  googleMap.mapType = GoogleMap.MAP_TYPE_NONE
+            //  googleMap.mapType = GoogleMap.MAP_TYPE_NONE
             googleMap.moveCamera(CameraUpdateFactory.zoomTo(5.0f))
 
             // Initial population of the grid
@@ -269,17 +266,29 @@ fun MapViewContainer(
                 updateTileCoordinates(newTileCoordinates)
 
                 // Repopulate the grid based on the new tile coordinates
-                populateGrid(googleMap, posts, newTileCoordinates.first, newTileCoordinates.second, context, onMarkerClicked)
+                populateGrid(
+                    googleMap,
+                    posts,
+                    newTileCoordinates.first,
+                    newTileCoordinates.second,
+                    context,
+                    onMarkerClicked
+                )
             }
         }
     }
 }
-
 // The tile map is responsible for determining if a post is at a specific tile coordinate
 val postTileMap = mutableMapOf<Pair<Int, Int>, FeedData>()
 var postIndex = 0
-
-fun populateGrid(googleMap: GoogleMap,  posts: List<FeedData>, currentX: Int, currentY: Int, context: Context, onPostClicked: (FeedData) -> Unit) {
+fun populateGrid(
+    googleMap: GoogleMap,
+    posts: List<FeedData>,
+    currentX: Int,
+    currentY: Int,
+    context: Context,
+    onPostClicked: (FeedData) -> Unit
+) {
     val zoomLevel = 5
     val circleSizeInPixels = 650 // Size of the circle in pixels
 
@@ -295,7 +304,10 @@ fun populateGrid(googleMap: GoogleMap,  posts: List<FeedData>, currentX: Int, cu
 
             val bubbleMarker: Bitmap = when {
                 // Use testBubble for tiles that already have a post
-                postTileMap.containsKey(tileKey) -> postBubble(circleSizeInPixels, postTileMap[tileKey]!!)
+                postTileMap.containsKey(tileKey) -> postBubble(
+                    circleSizeInPixels,
+                    postTileMap[tileKey]!!
+                )
 
                 // Assign a new post to this tile and use testBubble
                 postIndex < posts.size -> {
@@ -329,7 +341,7 @@ fun populateGrid(googleMap: GoogleMap,  posts: List<FeedData>, currentX: Int, cu
 
         // Display a toast message
         post?.let {
-         //   Toast.makeText(context, "Clicked on post: ${it.caption}", Toast.LENGTH_SHORT).show()
+            //   Toast.makeText(context, "Clicked on post: ${it.caption}", Toast.LENGTH_SHORT).show()
             onPostClicked(it)
         }
 
@@ -339,7 +351,8 @@ fun populateGrid(googleMap: GoogleMap,  posts: List<FeedData>, currentX: Int, cu
 }
 
 fun blankBubble(circleSizeInPixels: Int, tileX: Int, tileY: Int): Bitmap {
-    val bitmap = Bitmap.createBitmap(circleSizeInPixels, circleSizeInPixels, Bitmap.Config.ARGB_8888)
+    val bitmap =
+        Bitmap.createBitmap(circleSizeInPixels, circleSizeInPixels, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
 
     // Paint for the circle
@@ -349,7 +362,12 @@ fun blankBubble(circleSizeInPixels: Int, tileX: Int, tileY: Int): Bitmap {
     }
 
     // Draw the circle
-    canvas.drawCircle(circleSizeInPixels / 2f, circleSizeInPixels / 2f, circleSizeInPixels / 2f, circlePaint)
+    canvas.drawCircle(
+        circleSizeInPixels / 2f,
+        circleSizeInPixels / 2f,
+        circleSizeInPixels / 2f,
+        circlePaint
+    )
 
     // Text to be drawn on the circle
     val text = "$tileX, $tileY"
@@ -367,13 +385,15 @@ fun blankBubble(circleSizeInPixels: Int, tileX: Int, tileY: Int): Bitmap {
     val yPos = (circleSizeInPixels / 2f - (textPaint.descent() + textPaint.ascent()) / 2)
 
     // Draw the text
-   // canvas.drawText(text, xPos, yPos, textPaint)
+    // canvas.drawText(text, xPos, yPos, textPaint)
     canvas.drawText("No more content :(", xPos, yPos, textPaint)
 
     return bitmap
 }
+
 fun postBubble(circleSizeInPixels: Int, post: FeedData): Bitmap {
-    val bitmap = Bitmap.createBitmap(circleSizeInPixels, circleSizeInPixels, Bitmap.Config.ARGB_8888)
+    val bitmap =
+        Bitmap.createBitmap(circleSizeInPixels, circleSizeInPixels, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
 
     // Paint for the circle
@@ -383,7 +403,12 @@ fun postBubble(circleSizeInPixels: Int, post: FeedData): Bitmap {
     }
 
     // Draw the circle
-    canvas.drawCircle(circleSizeInPixels / 2f, circleSizeInPixels / 2f, circleSizeInPixels / 2f, circlePaint)
+    canvas.drawCircle(
+        circleSizeInPixels / 2f,
+        circleSizeInPixels / 2f,
+        circleSizeInPixels / 2f,
+        circlePaint
+    )
 
     // Text to be drawn on the circle
     val text = post.caption.toString()
@@ -413,6 +438,7 @@ fun tileToLatLong(x: Int, y: Int, zoomLevel: Int): Pair<Double, Double> {
     val latDeg = Math.toDegrees(latRad)
     return Pair(latDeg, lonDeg)
 }
+
 @Composable
 fun rememberMapViewWithLifecycle(): MapView {
     val context = LocalContext.current
@@ -446,9 +472,10 @@ private fun getMapLifecycleObserver(mapView: MapView) = LifecycleEventObserver {
 
 fun latLongToWorldCoordinates(lat: Double, lon: Double, zoomLevel: Int): Pair<Double, Double> {
     val x = (lon + 180) / 360 * (256 * 2.0.pow(zoomLevel.toDouble()))
-    val y = (1 - ln(tan(Math.toRadians(lat)) + 1 / cos(Math.toRadians(lat))) / Math.PI) / 2 * (256 * 2.0.pow(
-        zoomLevel.toDouble()
-    ))
+    val y =
+        (1 - ln(tan(Math.toRadians(lat)) + 1 / cos(Math.toRadians(lat))) / Math.PI) / 2 * (256 * 2.0.pow(
+            zoomLevel.toDouble()
+        ))
 
     return Pair(x, y)
 }

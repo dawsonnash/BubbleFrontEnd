@@ -277,7 +277,7 @@ fun FullScreenPostView(
                                             apiHandler.deletePost(post.postID, context)
 
                                             // Right now it just refreshes global page once you delete to refresh posts
-                                            val intent = Intent(context, GlobalPage::class.java)
+                                            val intent = Intent(context, Omniverse::class.java)
                                             context.startActivity(intent)
                                         }
                                     ) {
@@ -630,7 +630,7 @@ fun CreatePostDialog(
                             apiHandler.createNewPost(username, caption, pickedImageUri, context)
 
                             // Right now, once you create new post it just navigates refreshes global page
-                            val intent = Intent(context, GlobalPage::class.java)
+                            val intent = Intent(context, Omniverse::class.java)
                             context.startActivity(intent)
 
                         }
