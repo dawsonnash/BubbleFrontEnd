@@ -85,7 +85,7 @@ fun BottomDashboard(modifier: Modifier = Modifier) {
                 title = "Global",
                 icon = Icons.Default.Home,
                 onClick = {
-                    val intent = Intent(context, GlobalPage::class.java)
+                    val intent = Intent(context, Omniverse::class.java)
                     context.startActivity(intent)
                 }
             )

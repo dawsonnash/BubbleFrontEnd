@@ -184,9 +184,8 @@ class Omniverse : ComponentActivity() {
 
 
         setContent {
-            val posts by postModel.postList.observeAsState(initial = listOf())
             BubbleFrontEndTheme {
-                OmniverseScreen(posts)
+                OmniverseScreen(postModel, nonUserModel)
             }
         }
     }
@@ -194,13 +193,35 @@ class Omniverse : ComponentActivity() {
 }
 
 @Composable
-fun OmniverseScreen(posts: List<FeedData>) {
+fun OmniverseScreen(postModel: PostModel, nonUserModel: NonUserModel) {
     val mapView = rememberMapViewWithLifecycle()
     var tileCoordinates by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+    var selectedPost by remember { mutableStateOf<FeedData?>(null) }
+    var showFullScreenPostView by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    val apiHandler = ApiHandler()
+
+    val posts by postModel.postList.observeAsState(initial = listOf())
+
+    val uiPostList by postModel.uiPostList.observeAsState(initial = listOf())
 
     Box(modifier = Modifier.fillMaxSize()) {
-        MapViewContainer(posts, mapView, tileCoordinates ){ newTileCoordinates ->
-            tileCoordinates = newTileCoordinates
+        MapViewContainer(
+            posts,
+            mapView,
+            tileCoordinates,
+            context,
+            updateTileCoordinates = { newTileCoordinates ->
+                tileCoordinates = newTileCoordinates
+            },
+            onMarkerClicked = { post ->
+                selectedPost = post // Update the selected post when a marker is clicked
+                showFullScreenPostView = true
+            }
+        )
+        if (showFullScreenPostView && selectedPost != null) {
+            FullScreenPostView(selectedPost!!, postModel.uiPostList , apiHandler, nonUserModel, context, onBack = { showFullScreenPostView = false })
         }
 
         tileCoordinates?.let {
@@ -221,8 +242,12 @@ fun MapViewContainer(
     posts: List<FeedData>,
     mapView: MapView,
     tileCoordinates: Pair<Int, Int>?,
-    updateTileCoordinates: (Pair<Int, Int>) -> Unit
-) {
+    context: Context,
+    updateTileCoordinates: (Pair<Int, Int>) -> Unit,
+    onMarkerClicked: (FeedData) -> Unit  // Add this parameter
+)  {
+    var selectedPost by remember { mutableStateOf<FeedData?>(null) }
+
     AndroidView({ mapView }) { mapView ->
         mapView.getMapAsync { googleMap ->
             googleMap.mapType = GoogleMap.MAP_TYPE_SATELLITE
@@ -231,7 +256,7 @@ fun MapViewContainer(
 
             // Initial population of the grid
             tileCoordinates?.let {
-                populateGrid(googleMap, posts, it.first, it.second)
+                populateGrid(googleMap, posts, it.first, it.second, context, onMarkerClicked)
             }
 
             googleMap.setOnCameraIdleListener {
@@ -244,7 +269,7 @@ fun MapViewContainer(
                 updateTileCoordinates(newTileCoordinates)
 
                 // Repopulate the grid based on the new tile coordinates
-                populateGrid(googleMap, posts, newTileCoordinates.first, newTileCoordinates.second)
+                populateGrid(googleMap, posts, newTileCoordinates.first, newTileCoordinates.second, context, onMarkerClicked)
             }
         }
     }
@@ -253,7 +278,8 @@ fun MapViewContainer(
 // The tile map is responsible for determining if a post is at a specific tile coordinate
 val postTileMap = mutableMapOf<Pair<Int, Int>, FeedData>()
 var postIndex = 0
-fun populateGrid(googleMap: GoogleMap,  posts: List<FeedData>, currentX: Int, currentY: Int) {
+
+fun populateGrid(googleMap: GoogleMap,  posts: List<FeedData>, currentX: Int, currentY: Int, context: Context, onPostClicked: (FeedData) -> Unit) {
     val zoomLevel = 5
     val circleSizeInPixels = 650 // Size of the circle in pixels
 
@@ -269,26 +295,47 @@ fun populateGrid(googleMap: GoogleMap,  posts: List<FeedData>, currentX: Int, cu
 
             val bubbleMarker: Bitmap = when {
                 // Use testBubble for tiles that already have a post
-                postTileMap.containsKey(tileKey) -> testBubble(circleSizeInPixels, postTileMap[tileKey]!!)
+                postTileMap.containsKey(tileKey) -> postBubble(circleSizeInPixels, postTileMap[tileKey]!!)
 
                 // Assign a new post to this tile and use testBubble
                 postIndex < posts.size -> {
                     val post = posts[postIndex++]
                     postTileMap[tileKey] = post
-                    testBubble(circleSizeInPixels, post)
+                    postBubble(circleSizeInPixels, post)
                 }
 
                 // Use blankBubble for tiles without a post
                 else -> blankBubble(circleSizeInPixels, x, y)
             }
-
             val markerOptions = MarkerOptions()
                 .position(location)
                 .icon(BitmapDescriptorFactory.fromBitmap(bubbleMarker))
 
-            googleMap.addMarker(markerOptions)
+            // Add the marker to the map and set its tag
+            val marker = googleMap.addMarker(markerOptions)
+            if (marker != null) {
+                marker.tag = when {
+                    postTileMap.containsKey(tileKey) -> postTileMap[tileKey]
+                    postIndex < posts.size -> posts[postIndex - 1] // Because postIndex was incremented after assignment
+                    else -> null
+                }
+            }
+
         }
     }
+    googleMap.setOnMarkerClickListener { marker ->
+        // Retrieve the post from the marker's tag
+        val post = marker.tag as? FeedData
+
+        // Display a toast message
+        post?.let {
+         //   Toast.makeText(context, "Clicked on post: ${it.caption}", Toast.LENGTH_SHORT).show()
+            onPostClicked(it)
+        }
+
+        true // Return true to indicate that the click event is handled
+    }
+
 }
 
 fun blankBubble(circleSizeInPixels: Int, tileX: Int, tileY: Int): Bitmap {
@@ -325,7 +372,7 @@ fun blankBubble(circleSizeInPixels: Int, tileX: Int, tileY: Int): Bitmap {
 
     return bitmap
 }
-fun testBubble(circleSizeInPixels: Int, post: FeedData): Bitmap {
+fun postBubble(circleSizeInPixels: Int, post: FeedData): Bitmap {
     val bitmap = Bitmap.createBitmap(circleSizeInPixels, circleSizeInPixels, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
 
