@@ -134,7 +134,7 @@ class Omniverse : ComponentActivity() {
         imagePickerLauncher =
             registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
                 // Handle the image URI
-                GlobalPage.imageUri.value = uri
+                Omniverse.imageUri.value = uri
             }
         // Instantiating post model
         postModel = ViewModelProvider(this)[PostModel::class.java]
@@ -236,7 +236,7 @@ fun OmniverseScreen(postModel: PostModel, nonUserModel: NonUserModel,postTileMap
 
                 },
                 onDismiss = {
-                    GlobalPage.imageUri.value = null // Reset the image URI
+                    Omniverse.imageUri.value = null // Reset the image URI
                     showNewPostDialog = false
                 },
                 launchImagePicker = launchImagePicker
@@ -312,8 +312,8 @@ fun populateGrid(
 
     for (i in -1..1) {
         for (j in -1..1) {
-            val x = currentX + i
-            val y = currentY + j
+            val x = currentX + i + 1
+            val y = currentY + j + 1
             val tileKey = Pair(x, y)
 
             val (lat, lon) = tileToLatLong(x, y, zoomLevel)
@@ -729,6 +729,7 @@ fun CreatePostDialog(
                 onClick = {
                     if (caption.isNotEmpty()) {
                         if (username != null) {
+                            Log.d("ImageURI", "is: $pickedImageUri")
                             apiHandler.createNewPost(username, caption, pickedImageUri, context)
 
                             // Right now, once you create new post it just navigates refreshes global page
