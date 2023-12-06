@@ -140,11 +140,12 @@ fun EditProfileScreen() {
         Button(
             onClick = {
                 val apiHandler = ApiHandler()
-                apiHandler.handleEditProfile(newBio, newName, imageURI, context)
+                apiHandler.handleEditProfile(newBio, newName, imageURI, context) {
 
-                // Navigate to the next page after handling the profile edit
-                val intent = Intent(context, ProfilePage::class.java)
-                context.startActivity(intent)
+                    val intent = Intent(context, ProfilePage::class.java)
+                    intent.putExtra("dataChanged", true)
+                    context.startActivity(intent)
+                }
             },
             colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
             modifier = Modifier

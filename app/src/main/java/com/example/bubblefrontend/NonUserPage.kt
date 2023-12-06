@@ -103,6 +103,13 @@ fun NonUserScreen(username: String) {
     val profilePicture = nonUserProfileSharedPreferences?.getString("profile_picture", "")
 
     Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.DarkGray),
+        contentAlignment = Alignment.Center
+
+    ) {}
+    Box(
         modifier = Modifier.fillMaxSize()
     ) {
         Column(
@@ -131,7 +138,9 @@ fun NonUserScreen(username: String) {
                     Text(
                         text = username,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp
+                        fontSize = 20.sp,
+                        color = Color.White
+
                     )
                 }
                 Spacer(modifier = Modifier.weight(1f))
@@ -148,6 +157,7 @@ fun NonUserScreen(username: String) {
                     text = name,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
+                    color = Color.White,
                     modifier = Modifier.padding(start = 16.dp, top = 8.dp)
                 )
             }
@@ -159,6 +169,7 @@ fun NonUserScreen(username: String) {
                         text = bio,
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
+                        color = Color.White,
                         modifier = Modifier.padding(start = 16.dp, top = 8.dp)
                     )
                 }
@@ -168,12 +179,9 @@ fun NonUserScreen(username: String) {
             Spacer(
                 modifier = Modifier.weight(1f)
             )
-            Box(
-                modifier = Modifier
-                    .padding(16.dp)
-            ) {
-                BottomDashboard()
-            }
+
+            BottomDashboard()
+
         }
     }
 
@@ -198,10 +206,11 @@ fun NonUserProfileImageFollowersFollowing(imageURL: String) {
             Text(
                 text = "0",
                 fontWeight = FontWeight.Bold,
-                fontSize = 20.sp
+                fontSize = 20.sp,
+                color = Color.White,
             ) // Dynamic value for actual count
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = "Followers", fontSize = 20.sp)
+            Text(text = "Followers", fontSize = 20.sp, color = Color.White,)
         }
         Spacer(modifier = Modifier.width(12.dp))
         Column(
@@ -210,10 +219,11 @@ fun NonUserProfileImageFollowersFollowing(imageURL: String) {
             Text(
                 text = "0",
                 fontWeight = FontWeight.Bold,
-                fontSize = 20.sp
+                fontSize = 20.sp,
+                color = Color.White,
             ) // Dynamic value for actual count
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = "Following", fontSize = 20.sp)
+            Text(text = "Following", fontSize = 20.sp, color = Color.White,)
         }
         Spacer(modifier = Modifier.weight(1f))
     }
@@ -229,12 +239,8 @@ fun NonUserProfileIcon(imageURL: String, modifier: Modifier = Modifier) {
 
     Surface(
         modifier = modifier
-            .size(120.dp)
+            .size(130.dp)
             .clip(CircleShape)
-            .background(Color.Gray)
-            .padding(10.dp)
-            .shadow(4.dp, CircleShape),
-        color = Color.White
     ) {
 
         Image(

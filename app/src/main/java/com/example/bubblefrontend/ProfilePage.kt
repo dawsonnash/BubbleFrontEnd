@@ -44,10 +44,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.annotation.ExperimentalCoilApi
 import coil.compose.rememberImagePainter
+import coil.request.ImageRequest
 import com.example.bubblefrontend.api.ApiHandler
 import com.example.bubblefrontend.api.ProfileResponse
 import com.example.bubblefrontend.api.RefreshToken
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
+import com.google.firebase.database.core.persistence.CachePolicy
 
 class ProfilePage : ComponentActivity() {
 
@@ -56,34 +58,38 @@ class ProfilePage : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val dataChanged = intent.getBooleanExtra("dataChanged", false)
         setContent {
             BubbleFrontEndTheme {
-                ProfileScreen()
+                if(dataChanged) {
+                    ProfileScreen(shouldUpdateData = true)
+                } else {
+                    ProfileScreen(shouldUpdateData = false)
+                }
             }
-            refreshToken = RefreshToken(this)
+           // refreshToken = RefreshToken(this)
         }
     }
     override fun onDestroy() {
         super.onDestroy()
-        refreshToken.unregisterPreferenceChangeListener()
+        // refreshToken.unregisterPreferenceChangeListener()
     }
 }
 
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(shouldUpdateData: Boolean) {
     val context = LocalContext.current
     val profileData = remember { mutableStateOf<ProfileResponse?>(null) }
     val errorMessage =
         remember { mutableStateOf<String?>(null) } // Added to store the error message
 
     val profileDataUpdated = remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
+    LaunchedEffect(Unit, shouldUpdateData) {
         val apiHandler = ApiHandler()
         apiHandler.handleProfile(context,
             onSuccess = { profile ->
                 profileData.value = profile
                 profileDataUpdated.value = true
-
             },
             onError = { error ->
                 errorMessage.value = error // Store the error message
@@ -309,8 +315,17 @@ fun ProfileIcon(context: Context, profilePicture: String, modifier: Modifier = M
 
     ) {
 
+        // This removes image from cache using Coil. This was causing major problems
+        val imageRequest = ImageRequest.Builder(context)
+            .data(fullImageURL)
+            .memoryCachePolicy(coil.request.CachePolicy.DISABLED) // Disable memory cache
+            .diskCachePolicy(coil.request.CachePolicy.DISABLED)   // Disable disk cache
+            .build()
+
+        val painter = rememberImagePainter(request = imageRequest)
+
         Image(
-            painter = rememberImagePainter(fullImageURL),  // Using Coil to load an image from a URL
+            painter = painter,
             contentDescription = "Profile Picture",
             modifier = Modifier.size(100.dp),
             contentScale = ContentScale.Crop

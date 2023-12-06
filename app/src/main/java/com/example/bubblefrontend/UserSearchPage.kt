@@ -132,7 +132,7 @@ fun SearchBar(userList: List<NonUser>) {
             ) {
                 items(filteredUsers) { user ->
                     // Style that user info is displayed
-                    Text("${user.name} ~ ${user.username} ` ${user.bio}",
+                    Text("${user.name} ~ ${user.username}",
                         style = TextStyle(fontSize = 20.sp),
                         modifier = Modifier
                             .fillMaxWidth()

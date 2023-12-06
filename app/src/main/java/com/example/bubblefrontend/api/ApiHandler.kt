@@ -150,6 +150,7 @@ class ApiHandler {
             // Initialize SharedPreferences for profile data
             val profileSharedPreferences = context.getSharedPreferences("ProfileData", Context.MODE_PRIVATE)
             val profileEditor = profileSharedPreferences.edit()
+            profileEditor.clear()
 
             // Access stored token and username from existing "Account Details" in SharedPreferences for server call
             val accountSharedPreferences = context.getSharedPreferences("AccountDetails", Context.MODE_PRIVATE)
@@ -419,7 +420,7 @@ class ApiHandler {
             }
         })
     }
-        fun handleEditProfile(newBio: String, newName: String, imageUri: Uri?, context: Context) {
+        fun handleEditProfile(newBio: String, newName: String, imageUri: Uri?, context: Context,  onSuccess: () -> Unit) {
 
             val retrofit = Retrofit.Builder()
                 .baseUrl("http://54.202.77.126:8080")
@@ -480,7 +481,8 @@ class ApiHandler {
                             val message = editProfileResponse?.message
 
                             if (!message.isNullOrEmpty()) {
-                                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                             //   Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                                onSuccess()
                             }
                         } else {
                             val errorBody = response.errorBody()?.string()
