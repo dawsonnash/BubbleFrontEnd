@@ -142,10 +142,8 @@ fun SearchBar(userList: List<NonUser>) {
 
                             )
                             .clickable {
-                                val gson = Gson()
-                                val userJson = gson.toJson(user)
                                 val intent = Intent(context, NonUserPage::class.java).apply {
-                                    putExtra("NON_USER_JSON", userJson)
+                                    putExtra("USERNAME", user?.username)
                                 }
                                 context.startActivity(intent)
 

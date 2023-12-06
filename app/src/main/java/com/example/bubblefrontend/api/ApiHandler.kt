@@ -241,6 +241,106 @@ class ApiHandler {
                 }
             })
         }
+
+    fun handleNonUserProfile(username: String, context: Context, onSuccess: (ProfileResponse) -> Unit, onError: (String) -> Unit) {
+
+        // Standard Retrofit instance
+        val retrofit = Retrofit.Builder()
+            .baseUrl("http://54.202.77.126:8080")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        // Using API - always have to make an instance
+        val apiService = retrofit.create(ApiMethods::class.java)
+
+        // Initialize SharedPreferences for profile data
+        val nonUserProfileSharedPreferences = context.getSharedPreferences("NonUserProfileData", Context.MODE_PRIVATE)
+        val nonUserProfileEditor = nonUserProfileSharedPreferences.edit()
+
+        // Clear any existing non user data
+        nonUserProfileEditor.clear()
+
+        // For logging errors
+        Log.d("Debug", "Stored Username: $username")
+
+        // Begin server call
+        val call = username?.let { apiService.getNonUserProfile(username) }
+
+        // Response from server. Success or failure logic
+        call?.enqueue(object : Callback<ProfileResponse> {
+            override fun onResponse(call: Call<ProfileResponse>, response: Response<ProfileResponse>) {
+
+                if (response.isSuccessful) {
+
+                    // Stores the JSON response from the server into the ProfileResponse data class
+                    val nonUserProfileResponse = response.body()
+
+                    // Check if profileResponse is not null, i.e, does the account exist & does it have data
+                    if (nonUserProfileResponse != null) {
+
+                        // Store the profile data in the "ProfileData" SharedPreferences file
+                        nonUserProfileEditor.putString("username", nonUserProfileResponse.username)
+                        nonUserProfileEditor.putInt("uid", nonUserProfileResponse.uid)
+                        nonUserProfileEditor.putString("name", nonUserProfileResponse.name)
+                        nonUserProfileEditor.putString("profile_picture", nonUserProfileResponse.profile_picture)
+                        nonUserProfileEditor.putString("url", nonUserProfileResponse.url)
+                        nonUserProfileEditor.putString("html_url", nonUserProfileResponse.html_url)
+                        nonUserProfileEditor.putString("followers_url", nonUserProfileResponse.followers_url)
+                        nonUserProfileEditor.putString("following_url", nonUserProfileResponse.following_url)
+                        nonUserProfileEditor.putBoolean("bubble_admin", nonUserProfileResponse.bubble_admin)
+                        nonUserProfileEditor.putString("email", nonUserProfileResponse.email)
+                        nonUserProfileEditor.putString("bio", nonUserProfileResponse.bio)
+                        nonUserProfileEditor.putInt("followers", nonUserProfileResponse.followers)
+                        nonUserProfileEditor.putInt("following", nonUserProfileResponse.following)
+                        nonUserProfileEditor.putString("created_at", nonUserProfileResponse.created_at)
+                        nonUserProfileEditor.putString("last_accessed_at", nonUserProfileResponse.last_accessed_at)
+                        nonUserProfileEditor.putBoolean("editable", nonUserProfileResponse.editable)
+                        nonUserProfileEditor.apply()
+
+                        // Log the profile data for debugging
+                        Log.d("Debug", "Username: ${nonUserProfileResponse.username}")
+                        Log.d("Debug", "UID: ${nonUserProfileResponse.uid}")
+                        Log.d("Debug", "Name: ${nonUserProfileResponse.name}")
+                        Log.d("Debug", "Profile Picture: ${nonUserProfileResponse.profile_picture}")
+                        Log.d("Debug", "URL: ${nonUserProfileResponse.url}")
+                        Log.d("Debug", "HTML URL: ${nonUserProfileResponse.html_url}")
+                        Log.d("Debug", "Followers URL: ${nonUserProfileResponse.followers_url}")
+                        Log.d("Debug", "Following URL: ${nonUserProfileResponse.following_url}")
+                        Log.d("Debug", "Bubble Admin: ${nonUserProfileResponse.bubble_admin}")
+                        Log.d("Debug", "Email: ${nonUserProfileResponse.email}")
+                        Log.d("Debug", "Bio: ${nonUserProfileResponse.bio}")
+                        Log.d("Debug", "Followers: ${nonUserProfileResponse.followers}")
+                        Log.d("Debug", "Following: ${nonUserProfileResponse.following}")
+                        Log.d("Debug", "Created At: ${nonUserProfileResponse.created_at}")
+                        Log.d("Debug", "Last Accessed At: ${nonUserProfileResponse.last_accessed_at}")
+                        Log.d("Debug", "Editable: ${nonUserProfileResponse.editable}")
+
+                        // This tells the profile page that it was a success, in the LaunchedEffect coroutine
+                        onSuccess(nonUserProfileResponse)
+                    } else {
+                        onError("Failed to retrieve non user profile data")
+                    }
+                } else {
+                    // Handle API doc errors
+                    val errorBody = response.errorBody()?.string()
+                    Log.d("Debug", "Error Body: $errorBody")
+
+                    val errorMessage = when (response.code()) {
+                        404 -> "Account does not exist"
+                        500 -> "Internal Server Error, bruh"
+                        else -> "Unknown error occurred"
+                    }
+                    onError(errorMessage)
+
+
+                }
+            }
+
+            override fun onFailure(call: Call<ProfileResponse>, t: Throwable) {
+                onError("Network error, bro! ${t.message}")
+            }
+        })
+    }
     fun getUID(context: Context) {
 
         // Standard Retrofit instance

@@ -40,7 +40,6 @@ interface ApiMethods {
     @GET("api/account/{username}")
     @Headers("Accept: application/json")
     fun getNonUserProfile(
-        @Header("Authorization") authHeader: String,
         @Path("username") username: String
     ): Call<ProfileResponse>
 

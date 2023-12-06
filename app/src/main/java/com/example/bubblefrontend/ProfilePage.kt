@@ -76,22 +76,28 @@ fun ProfileScreen() {
     val errorMessage =
         remember { mutableStateOf<String?>(null) } // Added to store the error message
 
+    val profileDataUpdated = remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         val apiHandler = ApiHandler()
         apiHandler.handleProfile(context,
             onSuccess = { profile ->
                 profileData.value = profile
+                profileDataUpdated.value = true
+
             },
             onError = { error ->
                 errorMessage.value = error // Store the error message
             }
         )
     }
-    // Read profile data from SharedPreferences
-    val profileSharedPreferences = context.getSharedPreferences("ProfileData", Context.MODE_PRIVATE)
-    val name = profileSharedPreferences.getString("name", "")
-    val username = profileSharedPreferences.getString("username", "")
-    val profilePicture = profileSharedPreferences.getString("profile_picture", "")
+
+    // Read profile data from SharedPreferences. Make sure it is updated
+    val profileSharedPreferences = if (profileDataUpdated.value) {
+        context.getSharedPreferences("ProfileData", Context.MODE_PRIVATE)
+    } else null
+    val name = profileSharedPreferences?.getString("name", "")
+    val username = profileSharedPreferences?.getString("username", "")
+    val profilePicture = profileSharedPreferences?.getString("profile_picture", "")
 
 
     if (profileData.value != null) {
