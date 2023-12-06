@@ -37,6 +37,13 @@ interface ApiMethods {
         @Path("username") username: String
     ): Call<ProfileResponse>
 
+    @GET("api/account/{username}")
+    @Headers("Accept: application/json")
+    fun getNonUserProfile(
+        @Header("Authorization") authHeader: String,
+        @Path("username") username: String
+    ): Call<ProfileResponse>
+
     @Multipart
     @PUT("api/account/{username}")
     fun editProfile(

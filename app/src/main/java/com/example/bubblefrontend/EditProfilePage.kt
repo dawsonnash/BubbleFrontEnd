@@ -137,16 +137,22 @@ fun EditProfileScreen() {
 
         Spacer(modifier = Modifier.weight(1f))
 
-        Button(onClick = {
-            val apiHandler = ApiHandler()
-            apiHandler.handleEditProfile(newBio, newName,imageURI, context)},
+        Button(
+            onClick = {
+                val apiHandler = ApiHandler()
+                apiHandler.handleEditProfile(newBio, newName, imageURI, context)
+
+                // Navigate to the next page after handling the profile edit
+                val intent = Intent(context, ProfilePage::class.java)
+                context.startActivity(intent)
+            },
             colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
             modifier = Modifier
                 .fillMaxWidth()
                 .background(gradientBrush, shape = RoundedCornerShape(16.dp))
                 .padding(8.dp)
         ) {
-            Text("Save Changes",  color = Color.White)
+            Text("Save Changes", color = Color.White)
         }
 
 

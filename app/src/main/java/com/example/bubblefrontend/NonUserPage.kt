@@ -2,6 +2,7 @@ package com.example.bubblefrontend
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -46,6 +47,8 @@ class NonUserPage : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val userJson: String? = intent.getStringExtra("NON_USER_JSON")
         val user: NonUser? = Gson().fromJson(userJson, NonUser::class.java)
+        Log.d("NonUserPage", "User: $user")
+
         setContent {
             BubbleFrontEndTheme {
                 NonUserScreen(user)
