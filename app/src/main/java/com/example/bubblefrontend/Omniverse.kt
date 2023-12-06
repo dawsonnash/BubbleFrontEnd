@@ -790,8 +790,6 @@
         // To show the popup message for deleting posts
         var showDeleteConfirmation by remember { mutableStateOf(false) }
 
-        Log.d("deleteButton", "posts UID: ${post.uid}")
-        Log.d("deleteButon", "user's UID ${user?.uid}")
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -807,11 +805,10 @@
                     modifier = Modifier
                         .padding(12.dp)
                         // This crashes the app, but will eventually go to user's page
-                        .clickable {
-                            val gson = Gson()
-                            val userJson = gson.toJson(user)
+                        .clickable{
                             val intent = Intent(context, NonUserPage::class.java).apply {
-                                putExtra("NON_USER_JSON", userJson)
+                                putExtra("USERNAME", post.username)
+                                Log.d("NonUserPage", "Username: ${post.username}")
                             }
                             context.startActivity(intent)
                         }

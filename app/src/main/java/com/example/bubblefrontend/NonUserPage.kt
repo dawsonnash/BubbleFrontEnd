@@ -1,5 +1,6 @@
 package com.example.bubblefrontend
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -26,6 +27,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,7 +42,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.annotation.ExperimentalCoilApi
 import coil.compose.rememberImagePainter
+import com.example.bubblefrontend.api.ApiHandler
 import com.example.bubblefrontend.api.NonUser
+import com.example.bubblefrontend.api.ProfileResponse
 import com.example.bubblefrontend.ui.theme.BubbleFrontEndTheme
 import com.google.gson.Gson
 
@@ -47,87 +53,131 @@ class NonUserPage : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val userJson: String? = intent.getStringExtra("NON_USER_JSON")
         val user: NonUser? = Gson().fromJson(userJson, NonUser::class.java)
+
+        val username = intent.getStringExtra("USERNAME")
+
         Log.d("NonUserPage", "User: $user")
 
         setContent {
             BubbleFrontEndTheme {
-                NonUserScreen(user)
+                if (username != null) {
+                    NonUserScreen(username)
+                }
             }
         }
     }
 }
 
 @Composable
-fun NonUserScreen(user: NonUser?) {
-    val context = LocalContext.current
-        Box(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize(),
-                horizontalAlignment = Alignment.Start,  // Align to the start (or left)
-                verticalArrangement = Arrangement.Top
+fun NonUserScreen(username: String) {
 
+    val context = LocalContext.current
+    val nonUserUsername = username
+    val nonUserProfileData = remember { mutableStateOf<ProfileResponse?>(null) }
+    val errorMessage =
+        remember { mutableStateOf<String?>(null) } // Added to store the error message
+
+    val nonUserDataUpdated = remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        val apiHandler = ApiHandler()
+        if (nonUserUsername != null) {
+            apiHandler.handleNonUserProfile(nonUserUsername, context,
+                onSuccess = { profile ->
+                    nonUserProfileData.value = profile
+                    nonUserDataUpdated.value = true
+                },
+                onError = { error ->
+                    errorMessage.value = error // Store the error message
+                }
+            )
+        }
+    }
+    // Read profile data from SharedPreferences
+    // Re-fetch data from SharedPreferences when dataUpdated is true
+    val nonUserProfileSharedPreferences = if (nonUserDataUpdated.value) {
+        context.getSharedPreferences("NonUserProfileData", Context.MODE_PRIVATE)
+    } else null
+    val name = nonUserProfileSharedPreferences?.getString("name", "")
+    val username = nonUserProfileSharedPreferences?.getString("username", "")
+    val bio = nonUserProfileSharedPreferences?.getString("bio", "")
+    val profilePicture = nonUserProfileSharedPreferences?.getString("profile_picture", "")
+
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.Start,  // Align to the start (or left)
+            verticalArrangement = Arrangement.Top
+
+        ) {
+            // Top Bar
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Top Bar
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Back",
-                        modifier = Modifier.clickable {
-                            // Navigating back to the ProfilePage
-                            val intent = Intent(context, Omniverse::class.java)
-                            context.startActivity(intent)
-                        }
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Back",
+                    modifier = Modifier.clickable {
+                        // Navigating back to the ProfilePage
+                        val intent = Intent(context, UserSearchPage::class.java)
+                        context.startActivity(intent)
+                    }
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                if (username != null) {
                     Text(
-                        text = user?.username?: "Unknown",
+                        text = username,
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp
                     )
-                    Spacer(modifier = Modifier.weight(1f))
                 }
+                Spacer(modifier = Modifier.weight(1f))
+            }
 
-                // Read profile data from SharedPreferences
-                NonUserProfileImageFollowersFollowing(imageURL = user?.profile_picture ?: "" )
+            // Read profile data from SharedPreferences
+            if (profilePicture != null) {
+                NonUserProfileImageFollowersFollowing(imageURL = profilePicture)
+            }
 
 
+            if (name != null) {
                 Text(
-                    text = user?.name ?: "Unknown",
+                    text = name,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
                     modifier = Modifier.padding(start = 16.dp, top = 8.dp)
                 )
+            }
 
-                // Bio
-                Row(modifier = Modifier.padding(end = 16.dp)) {
+            // Bio
+            Row(modifier = Modifier.padding(end = 16.dp)) {
+                if (bio != null) {
                     Text(
-                        text = user?.bio ?: "Bio not found",
+                        text = bio,
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
                         modifier = Modifier.padding(start = 16.dp, top = 8.dp)
                     )
-                    Spacer(modifier = Modifier.weight(1f))
                 }
+                Spacer(modifier = Modifier.weight(1f))
+            }
 
-                Spacer(
-                    modifier = Modifier.weight(1f)
-                )
-                Box(
-                    modifier = Modifier
-                        .padding(16.dp)
-                ) {
-                    BottomDashboard()
-                }
+            Spacer(
+                modifier = Modifier.weight(1f)
+            )
+            Box(
+                modifier = Modifier
+                    .padding(16.dp)
+            ) {
+                BottomDashboard()
             }
         }
-
     }
+
+}
 
 @Composable
 fun NonUserProfileImageFollowersFollowing(imageURL: String) {
@@ -145,7 +195,11 @@ fun NonUserProfileImageFollowersFollowing(imageURL: String) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = "0", fontWeight = FontWeight.Bold, fontSize = 20.sp) // Dynamic value for actual count
+            Text(
+                text = "0",
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp
+            ) // Dynamic value for actual count
             Spacer(modifier = Modifier.height(4.dp))
             Text(text = "Followers", fontSize = 20.sp)
         }
@@ -153,7 +207,11 @@ fun NonUserProfileImageFollowersFollowing(imageURL: String) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = "0", fontWeight = FontWeight.Bold, fontSize = 20.sp) // Dynamic value for actual count
+            Text(
+                text = "0",
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp
+            ) // Dynamic value for actual count
             Spacer(modifier = Modifier.height(4.dp))
             Text(text = "Following", fontSize = 20.sp)
         }
