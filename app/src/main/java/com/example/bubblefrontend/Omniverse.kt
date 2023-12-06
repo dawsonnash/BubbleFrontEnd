@@ -263,7 +263,8 @@ fun MapViewContainer(
 
     AndroidView({ mapView }) { mapView ->
         mapView.getMapAsync { googleMap ->
-            googleMap.mapType = GoogleMap.MAP_TYPE_SATELLITE
+          //  googleMap.mapType = GoogleMap.MAP_TYPE_SATELLITE
+            googleMap.mapType = GoogleMap.MAP_TYPE_NONE
             googleMap.uiSettings.isZoomControlsEnabled = false
             googleMap.uiSettings.isZoomGesturesEnabled = false
             if (AlaskaStartup) {
@@ -457,7 +458,6 @@ suspend fun postBubble(circleSizeInPixels: Int, post: FeedData, context: Context
     val croppedBubbleBackground = cropToCircle(scaledBubbleBackground, 2f)
 
     canvas.drawBitmap(croppedBubbleBackground, 0f, 0f, null)
-
 
     val circlePaint = Paint().apply {
         val radius = circleSizeInPixels / 2f
@@ -759,12 +759,12 @@ fun FullScreenPostView(
     onBack: () -> Unit
 ) {
 
-    // Observe  singleUser LiveData and react to changes
-    val user by nonUserModel.singleUser.observeAsState()
-
     // This allows for the heart icon to change state in real-time
     val uiPosts by uiFeedData.observeAsState(initial = listOf())
     val uiPost = uiPosts.find { it.feedData.postID == post.postID }
+
+    // Observe  singleUser LiveData and react to changes
+    val user by nonUserModel.singleUser.observeAsState()
 
     // Converting image urls to their full HTTP urls
     val postImageURL = post.photo_url

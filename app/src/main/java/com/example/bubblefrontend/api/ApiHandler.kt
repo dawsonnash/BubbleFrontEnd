@@ -8,6 +8,7 @@ import android.util.Log
 import android.widget.Toast
 import com.example.bubblefrontend.GlobalPage
 import com.example.bubblefrontend.LoginPage
+import com.example.bubblefrontend.Omniverse
 import com.example.bubblefrontend.WelcomePage
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -53,7 +54,7 @@ class ApiHandler {
 
                         editor.apply()
                         // Navigate to Global
-                        val intent = Intent(context, GlobalPage::class.java)
+                        val intent = Intent(context, Omniverse::class.java)
                         context.startActivity(intent)
 
 
