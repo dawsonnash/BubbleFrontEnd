@@ -134,8 +134,12 @@
             nonUserModel.toastMessage.observe(this) { message ->
                 Toast.makeText(this, message, Toast.LENGTH_LONG).show()
             }
+
+            val profileSharedPreferences = getSharedPreferences("ProfileData", Context.MODE_PRIVATE)
+            val uid = profileSharedPreferences.getInt("uid", 0)
+
             // Default values for page and pageSize
-            postModel.fetchPosts(page = 1, pageSize = 50)
+            postModel.fetchPosts(page = 1, pageSize = 50, uid)
             nonUserModel.fetchUsers()
 
 
@@ -224,16 +228,7 @@
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
-                if (showFloatingActionButton) {
-                    FloatingActionButton(
-                        onClick = { showNewPostDialog = true },
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(bottom = 70.dp, end = 16.dp)
-                    ) {
-                        Icon(imageVector = Icons.Filled.Add, contentDescription = "Add Post")
-                    }
-                }
+
                 if (showNewPostDialog) {
                     CreatePostDialog(
                         context, apiHandler, postModel,
@@ -249,6 +244,16 @@
                         },
                         launchImagePicker = launchImagePicker
                     )
+                }
+                if (showFloatingActionButton) {
+                    FloatingActionButton(
+                        onClick = { showNewPostDialog = true },
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(bottom = 70.dp, end = 16.dp)
+                    ) {
+                        Icon(imageVector = Icons.Filled.Add, contentDescription = "Add Post")
+                    }
                 }
             }
             BottomDashboard()

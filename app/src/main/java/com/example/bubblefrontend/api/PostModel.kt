@@ -1,6 +1,8 @@
 package com.example.bubblefrontend.api
 
+import android.content.Context
 import android.util.Log
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -27,10 +29,12 @@ class PostModel() : ViewModel() {
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
+
     private val apiService: ApiMethods = retrofit.create(ApiMethods::class.java)
 
-    fun fetchPosts(page: Int, pageSize: Int) {
-        apiService.getFeed(page, pageSize).enqueue(object : Callback<List<FeedData>> {
+    fun fetchPosts(page: Int, pageSize: Int, uid: Int) {
+        Log.d("ThisFetchPosts", " page: $page, pageSize: $pageSize, $uid")
+        apiService.getFeed(page, pageSize, uid).enqueue(object : Callback<List<FeedData>> {
             override fun onResponse(call: Call<List<FeedData>>, response: Response<List<FeedData>>) {
                 if (response.isSuccessful)  {
                     val feedDataList = response.body() ?: listOf()

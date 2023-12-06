@@ -112,8 +112,10 @@ class GlobalPage : ComponentActivity() {
         nonUserModel.toastMessage.observe(this) { message ->
             Toast.makeText(this, message, Toast.LENGTH_LONG).show()
         }
+
+        // THIS DOES NOT WORK
         // Default values for page and pageSize
-        postModel.fetchPosts(page = 1, pageSize = 12)
+        postModel.fetchPosts(page = 1, pageSize = 12, 8 )
         nonUserModel.fetchUsers()
 
 

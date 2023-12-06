@@ -66,8 +66,7 @@ data class FeedData(
     val timeAgo: String,
     val likeCount: Int,
     var hasLiked: Int,
-    // var likeCount: MutableState<Int>,
-    // var hasLiked: MutableState<Int>,
+
 
     val username: String,
     val name: String,

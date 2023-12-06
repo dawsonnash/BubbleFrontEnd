@@ -107,7 +107,7 @@ fun NonUserScreen(user: NonUser?) {
                 // Bio
                 Row(modifier = Modifier.padding(end = 16.dp)) {
                     Text(
-                        text = user?.bio ?: "Bio is not included in JSON from server",
+                        text = user?.bio ?: "Bio not found",
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
                         modifier = Modifier.padding(start = 16.dp, top = 8.dp)

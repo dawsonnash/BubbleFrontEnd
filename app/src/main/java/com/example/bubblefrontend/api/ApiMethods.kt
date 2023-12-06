@@ -72,7 +72,7 @@ interface ApiMethods {
     fun getFeed(
         @Query("p") page: Int? = null, // Page number for pagination
         @Query("ps") pageSize: Int? = null ,// Page size for pagination
-        //@Body feedBody: FeedBody
+        @Query("uid") userId: Int
     ): Call<List<FeedData>>
 
     @Multipart

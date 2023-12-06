@@ -484,6 +484,8 @@ class ApiHandler {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
+        Log.d("LikePost", "Uid: $uid postID: $postID")
+
         val apiService = retrofit.create(ApiMethods::class.java)
 
         val likeRequestBody = LikeRequestBody(uid, postID)
