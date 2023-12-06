@@ -48,14 +48,17 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -115,7 +118,8 @@ class Omniverse : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Clear the tile map to refresh post positions
+
+        // Clear the tile map and post index to refresh post positions and post array.
         postTileMap.clear()
         postIndex = 0
 
@@ -135,9 +139,8 @@ class Omniverse : ComponentActivity() {
             Toast.makeText(this, message, Toast.LENGTH_LONG).show()
         }
         // Default values for page and pageSize
-        postModel.fetchPosts(page = 1, pageSize = 50)
+        postModel.fetchPosts(page = 1, pageSize = 20)
         nonUserModel.fetchUsers()
-
 
         setContent {
             BubbleFrontEndTheme {
@@ -154,6 +157,19 @@ class Omniverse : ComponentActivity() {
         var imageUri = mutableStateOf<Uri?>(null)
     }
 }
+@Composable
+fun LoadingScreen(){
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.fillMaxSize()
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(80.dp),
+            color = androidx.compose.ui.graphics.Color.Blue,
+        )
+    }
+}
+
 
 @Composable
 fun OmniverseScreen(
@@ -162,95 +178,103 @@ fun OmniverseScreen(
     postTileMap: MutableMap<Pair<Int, Int>, FeedData>,
     launchImagePicker: () -> Unit
 ) {
-    val mapView = rememberMapViewWithLifecycle()
-    var tileCoordinates by remember { mutableStateOf<Pair<Int, Int>?>(null) }
-    var selectedPost by remember { mutableStateOf<FeedData?>(null) }
-    var showFullScreenPostView by remember { mutableStateOf(false) }
-    var showNewPostDialog by remember { mutableStateOf(false) }
+    val isLoading by postModel.isLoading.observeAsState(false)
 
-    val context = LocalContext.current
+    if (isLoading) {
+        LoadingScreen()
+    }
+    else {
 
-    val apiHandler = ApiHandler()
+        val mapView = rememberMapViewWithLifecycle()
+        var tileCoordinates by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+        var selectedPost by remember { mutableStateOf<FeedData?>(null) }
+        var showFullScreenPostView by remember { mutableStateOf(false) }
+        var showNewPostDialog by remember { mutableStateOf(false) }
 
-    val posts by postModel.postList.observeAsState(initial = listOf())
+        val context = LocalContext.current
 
-    val uiPostList by postModel.uiPostList.observeAsState(initial = listOf())
+        val apiHandler = ApiHandler()
 
-    Column() {
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-        ) {
-            MapViewContainer(
-                posts,
-                postTileMap,
-                mapView,
-                tileCoordinates,
-                context,
-                updateTileCoordinates = { newTileCoordinates ->
-                    tileCoordinates = newTileCoordinates
-                },
-                onMarkerClicked = { post ->
-                    selectedPost = post // Update the selected post when a marker is clicked
-                    showFullScreenPostView = true
-                }
-            )
-            if (showFullScreenPostView && selectedPost != null) {
-                FullScreenPostView(
-                    selectedPost!!,
-                    postModel.uiPostList,
-                    apiHandler,
-                    nonUserModel,
-                    context,
-                    onBack = { showFullScreenPostView = false })
-            }
-
-            tileCoordinates?.let {
-                Text(
-                    "Current Tile: X=${it.first}, Y=${it.second}",
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(top = 16.dp)
-                        .background(
-                            androidx.compose.ui.graphics.Color.White,
-                            shape = RoundedCornerShape(4.dp)
-                        )
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                )
-            }
-            FloatingActionButton(
-                onClick = { showNewPostDialog = true },
+        Column() {
+            Box(
                 modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(bottom = 70.dp, end = 16.dp)
+                    .weight(1f)
+                    .fillMaxWidth()
             ) {
-                Icon(imageVector = Icons.Filled.Add, contentDescription = "Add Post")
-            }
-            if (showNewPostDialog) {
-                CreatePostDialog(
-                    context, apiHandler, postModel,
-                    onPostCreate = { caption, pickedImageUri ->
-                        Omniverse.imageUri.value = null // Reset the image URI
-                        showNewPostDialog = false
-
-
+                MapViewContainer(
+                    isLoading,
+                    postModel,
+                    postTileMap,
+                    mapView,
+                    tileCoordinates,
+                    context,
+                    updateTileCoordinates = { newTileCoordinates ->
+                        tileCoordinates = newTileCoordinates
                     },
-                    onDismiss = {
-                        Omniverse.imageUri.value = null // Reset the image URI
-                        showNewPostDialog = false
-                    },
-                    launchImagePicker = launchImagePicker
+                    onMarkerClicked = { post ->
+                        selectedPost = post // Update the selected post when a marker is clicked
+                        showFullScreenPostView = true
+                    }
                 )
+                if (showFullScreenPostView && selectedPost != null) {
+                    FullScreenPostView(
+                        selectedPost!!,
+                        postModel.uiPostList,
+                        apiHandler,
+                        nonUserModel,
+                        context,
+                        onBack = { showFullScreenPostView = false })
+                }
+
+                tileCoordinates?.let {
+                    Text(
+                        "Current Tile: X=${it.first}, Y=${it.second}",
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(top = 16.dp)
+                            .background(
+                                androidx.compose.ui.graphics.Color.White,
+                                shape = RoundedCornerShape(4.dp)
+                            )
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+                FloatingActionButton(
+                    onClick = { showNewPostDialog = true },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(bottom = 70.dp, end = 16.dp)
+                ) {
+                    Icon(imageVector = Icons.Filled.Add, contentDescription = "Add Post")
+                }
+                if (showNewPostDialog) {
+                    CreatePostDialog(
+                        context, apiHandler, postModel,
+                        onPostCreate = { caption, pickedImageUri ->
+                            Omniverse.imageUri.value = null // Reset the image URI
+                            showNewPostDialog = false
+
+
+                        },
+                        onDismiss = {
+                            Omniverse.imageUri.value = null // Reset the image URI
+                            showNewPostDialog = false
+                        },
+                        launchImagePicker = launchImagePicker
+                    )
+                }
+
             }
+            BottomDashboard()
         }
-        BottomDashboard()
     }
 }
 
+
 @Composable
 fun MapViewContainer(
-    posts: List<FeedData>,
+    isLoading: Boolean, // variable for potentially having aloading screen
+    postModel: PostModel,
     postTileMap: MutableMap<Pair<Int, Int>, FeedData>,
     mapView: MapView,
     tileCoordinates: Pair<Int, Int>?,
@@ -258,8 +282,26 @@ fun MapViewContainer(
     updateTileCoordinates: (Pair<Int, Int>) -> Unit,
     onMarkerClicked: (FeedData) -> Unit
 ) {
+    val posts by postModel.postList.observeAsState(initial = listOf())
+    val uiPostList by postModel.uiPostList.observeAsState(initial = listOf())
+
     val coroutineScope = rememberCoroutineScope()
     var AlaskaStartup by remember { mutableStateOf(true) }
+
+
+    val canFetchMore by postModel.canFetchMore.observeAsState(true)
+    // Observe post size, which post index your at, and whether there is any posts left
+    LaunchedEffect(posts, postIndex, canFetchMore) {
+
+        val remainingPosts = posts.size - postIndex
+        if (remainingPosts <= 10 && canFetchMore) {
+            Log.d("FetchedPosts", "Triggering Fetch - Current posts.size: ${posts.size}, postIndex: $postIndex, pageNumber: $pageNumber")
+            coroutineScope.launch {
+                postModel.fetchPosts(pageNumber, 20) // Fetch 20 more posts
+                pageNumber += 1                 // Increase next page
+            }
+        }
+    }
 
     AndroidView({ mapView }) { mapView ->
         mapView.getMapAsync { googleMap ->
@@ -299,8 +341,8 @@ fun MapViewContainer(
     }
 }
 
-// The tile map is responsible for determining if a post is at a specific tile coordinate
 var postIndex = 0
+var pageNumber = 2
 suspend fun populateGrid(
     googleMap: GoogleMap,
     posts: List<FeedData>,
@@ -310,12 +352,14 @@ suspend fun populateGrid(
     context: Context,
     onPostClicked: (FeedData) -> Unit
 ) {
+
     val zoomLevel = 5
     val circleSizeInPixels = 650 // Size of the circle in pixels
 
     // This adjusts the current user's tile to fit where the actual center of the screen is. For some reason, the Google center tiles don't matchup with the center
     var adjustedCurrentX = currentX + 1
     var adjustedCurrentY =  currentY + 1
+
 
     // First, try placing a post at the user's current location
     val currentUserTileKey = Pair(adjustedCurrentX, adjustedCurrentY)
